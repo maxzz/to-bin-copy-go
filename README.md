@@ -24,7 +24,7 @@ This utility is a direct conversion of the original C# WinForms application `Cop
    - If copying fails because a file is locked or in use (Sharing Violation error `0x80070020`), the tool automatically renames the existing locked destination file (e.g., `DpFbView.dll` -> `DpFbView_1.dll`, `DpFbView_2.dll`, etc.) and retries the copy successfully.
 
 5. **Administrator Privilege Warning**:
-   - Since copying to `C:\Program Files` or `C:\Program Files (x86)` requires elevated privileges on Windows, the tool checks for administrator rights on startup and outputs a user-friendly warning if it's run as a standard user.
+   - Since copying to `C:/Program Files` or `C:/Program Files (x86)` requires elevated privileges on Windows, the tool checks for administrator rights on startup and outputs a user-friendly warning if it's run as a standard user.
 
 ---
 
@@ -91,7 +91,7 @@ First, make sure you have Go installed on your machine.
 
 - `-release`: Run the utility targeting **Release** compiled files (looks for paths specified in the `sourcePathsRelease` array instead of `sourcePathsDebug`). By default, the utility operates on **Debug** compiled files.
 - `-config <path>`: Path to a JSON configuration file (defaults to `config.json`).
-- `-source <paths>`: Comma-separated list of paths (e.g. `-source "C:\src\Win32,C:\src\x64"`), bypassing any registry or config file settings.
+- `-source <paths>`: Comma-separated list of paths (e.g. `-source "C:/src/Win32,C:/src/x64"`), bypassing any registry or config file settings.
 
 ### Examples
 
@@ -108,12 +108,12 @@ First, make sure you have Go installed on your machine.
 
 **3. Run with Custom Paths directly (bypassing configs):**
 ```bash
-.\copy-pm-files.exe -source "C:\MySources\Debug.Win32,C:\MySources\Debug.x64"
+.\copy-pm-files.exe -source "C:/MySources/Debug.Win32,C:/MySources/Debug.x64"
 ```
 
 **4. Run with a Custom Configuration File:**
 ```bash
-.\copy-pm-files.exe -config C:\Users\Public\my_custom_config.json
+.\copy-pm-files.exe -config C:/Users/Public/my_custom_config.json
 ```
 
 ---
@@ -137,7 +137,7 @@ If you prefer using a `config.json` file rather than command-line arguments or t
 - **Forward Slashes**: Use `/` in configuration paths (recommended; no escaping required in JSON).
 - **Backslashes**: Windows-style `\` paths are also accepted at runtime and normalized automatically.
 - **Normalization**: Paths are automatically cleaned to match the host operating system's standard.
-- **Trailing Slashes**: Trailing slashes are automatically stripped (e.g., `C:/Folder/` becomes `C:\Folder`), preventing errors in suffix matching or folder joins.
+- **Trailing Slashes**: Trailing slashes are automatically stripped (e.g., `C:/Folder/` becomes `C:/Folder`), preventing errors in suffix matching or folder joins.
 
 ### Comments Support
 This utility supports **JSON comments**. You are free to document your configurations directly inside JSON files using:
@@ -156,8 +156,8 @@ The configuration file is written in standard JSON format (with comment support)
    - *Note: Source directory paths in both arrays must end with either `Win32` or `x64` (case-insensitive) so that the utility knows which architecture target files to copy.*
 
 2. **`dst` (Object)**:
-   - **`win32` (String)**: Specifies a custom destination folder for Win32 files. If left empty (`""`), it automatically falls back to the default system installation path: `C:\Program Files (x86)\DigitalPersona\Bin`.
-   - **`x64` (String)**: Specifies a custom destination folder for x64 files. If left empty (`""`), it automatically falls back to the default system installation path: `C:\Program Files\DigitalPersona\Bin`.
+   - **`win32` (String)**: Specifies a custom destination folder for Win32 files. If left empty (`""`), omitted, or null, the utility automatically falls back to the default system-wide installation folder: `C:/Program Files (x86)/DigitalPersona/Bin` (or dynamically resolved via the `%ProgramFiles(x86)%` environment variable).
+   - **`x64` (String)**: Specifies a custom destination folder for x64 files. If left empty (`""`), omitted, or null, the utility automatically falls back to the default system-wide installation folder: `C:/Program Files/DigitalPersona/Bin` (or dynamically resolved via the `%ProgramFiles%` environment variable).
 
 ### JSON Schema Template (with comments & mixed slashes example)
 
@@ -167,10 +167,10 @@ The configuration file is written in standard JSON format (with comment support)
   "dp": {
     "paths": {
       "src": {
-        // Source folders (mix of slashes and trailing slashes are automatically resolved)
+        // Source folders (trailing slashes are automatically resolved and normalized)
         "debug": [
           "C:/y/c/dp/pm-native/src/~Output/Debug.Win32/",
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.x64"
+          "C:/y/c/dp/pm-native/src/~Output/Debug.x64"
         ],
         "release": [
           "C:/y/c/dp/pm-native/src/~Output/Release.Win32",
@@ -179,7 +179,11 @@ The configuration file is written in standard JSON format (with comment support)
       },
       "dst": {
         /*
-           Custom destinations (leave empty to use system defaults)
+           Custom destinations:
+           - Leave as "" (empty string) to automatically target default system folders:
+             - win32: C:/Program Files (x86)/DigitalPersona/Bin
+             - x64:   C:/Program Files/DigitalPersona/Bin
+           - Provide a custom non-empty path (e.g. "C:/MyCustomFolder/Bin") to override.
         */
         "win32": "",
         "x64": ""
@@ -189,7 +193,7 @@ The configuration file is written in standard JSON format (with comment support)
 }
 ```
 
-*Note: In normal JSON strings, backslashes (`\`) should be escaped as `\\`. However, forward slashes `/` are also fully supported without any escaping.*
+*Note: Using forward slashes `/` in paths is highly recommended so that no escaping is required in JSON strings.*
 
 ---
 
@@ -200,7 +204,7 @@ We have provided several configurations inside the `tests/` folder for reference
 - **`config_full_dual_arch.json`**: Complete setup with both Win32 and x64 directories configured for both Debug and Release environments.
 - **`config_x64_only.json`**: Restricts actions only to the 64-bit destination.
 - **`config_win32_only.json`**: Restricts actions only to the 32-bit (x86) destination.
-- **`config_custom_drive_paths.json`**: Demonstrates the use of alternate drives and directory naming layouts (e.g. `D:\BuildServer`).
+- **`config_custom_drive_paths.json`**: Demonstrates the use of alternate drives and directory naming layouts (e.g. `D:/BuildServer`).
 - **`config_empty.json`**: Empty arrays structure, triggering registry fallbacks when run.
 
 You can try using any of these by passing the `-config` flag:
