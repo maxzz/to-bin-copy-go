@@ -14,7 +14,8 @@ This utility is a direct conversion of the original C# WinForms application `Cop
   - [Comments Support](#comments-support)
   - [Structure Breakdown](#structure-breakdown)
   - [JSON Schema Template (with comments & mixed slashes example)](#json-schema-template-with-comments--mixed-slashes-example)
-- [Example Configurations (tests/ directory)](#example-configurations-tests-directory)
+  - [Detailed Configuration & Target Mode Clarification](#detailed-configuration--target-mode-clarification)
+- [Example Configurations](#example-configurations-tests-directory)
 - [Folder Structure](#folder-structure)
 - [How to Build and Run (Using NPM/Node scripts)](#how-to-build-and-run-using-npm-node-scripts)
   - [Using NPM Scripts](#using-npm-scripts)
@@ -22,8 +23,6 @@ This utility is a direct conversion of the original C# WinForms application `Cop
 - [How to Run](#how-to-run)
   - [Command-Line Arguments](#command-line-arguments)
   - [Examples](#examples)
-- [Detailed Configuration & Target Mode Clarification](#detailed-configuration--target-mode-clarification)
-  - [Important: Target Modes vs. Utility Compilation](#important-target-modes-vs-utility-compilation)
 
 ---
 
@@ -158,7 +157,17 @@ Each item in `"items"` contains:
 
 ---
 
-## Example Configurations (`tests/` directory)
+### Detailed Configuration & Target Mode Clarification
+
+Important: Target Modes vs. Utility Compilation
+It is crucial to clarify that the **Debug** and **Release** target modes **do not describe how this utility itself is compiled**, nor does running with `-release` change the performance characteristics of this Go tool. Rather:
+* **The mode dictates which sets of your project's compiled binary files are being targeted for copying.**
+* When running in **Debug mode** (default), the utility reads the paths where your C++/C# compiler outputs the **Debug target builds** (typically ending with `Debug.Win32` and `Debug.x64`).
+* When running in **Release mode** (using `-release`), the utility targets the paths where your compiler outputs the **Release target builds** (typically ending with `Release.Win32` and `Release.x64`).
+
+---
+
+## Example Configurations
 
 We have provided several configurations inside the `tests/` folder for reference or testing:
 
@@ -272,13 +281,3 @@ First, make sure you have Go installed on your machine.
 ```bash
 .\copy-pm-files.exe -config C:/Users/Public/my_custom_config.json
 ```
-
----
-
-## Detailed Configuration & Target Mode Clarification
-
-### Important: Target Modes vs. Utility Compilation
-It is crucial to clarify that the **Debug** and **Release** target modes **do not describe how this utility itself is compiled**, nor does running with `-release` change the performance characteristics of this Go tool. Rather:
-* **The mode dictates which sets of your project's compiled binary files are being targeted for copying.**
-* When running in **Debug mode** (default), the utility reads the paths where your C++/C# compiler outputs the **Debug target builds** (typically ending with `Debug.Win32` and `Debug.x64`).
-* When running in **Release mode** (using `-release`), the utility targets the paths where your compiler outputs the **Release target builds** (typically ending with `Release.Win32` and `Release.x64`).
