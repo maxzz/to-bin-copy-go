@@ -17,18 +17,18 @@ type Config struct {
 }
 
 type ConfigItem struct {
-	Name     string     `json:"name"`
-	IsActive bool       `json:"isActive"`
-	Paths    *PathBlock `json:"paths,omitempty"`
+	Name     string      `json:"name"`
+	IsActive bool        `json:"isActive"`
+	Paths    *PathBlock  `json:"paths,omitempty"`
 	Files    []FileBlock `json:"files,omitempty"`
 }
 
 type PathBlock struct {
-	Dp              bool        `json:"dp"`
-	Src             SrcConfig   `json:"src"`
-	Dst             DstConfig   `json:"dst"`
-	SrcFilesInclude []string    `json:"srcFilesInclude,omitempty"`
-	SrcFilesExclude []string    `json:"srcFilesExclude,omitempty"`
+	Dp              bool      `json:"dp"`
+	Src             SrcConfig `json:"src"`
+	Dst             DstConfig `json:"dst"`
+	SrcFilesInclude []string  `json:"srcFilesInclude,omitempty"`
+	SrcFilesExclude []string  `json:"srcFilesExclude,omitempty"`
 }
 
 type SrcConfig struct {
@@ -76,8 +76,7 @@ func parseArgs() AppArgs {
 		// Clean up and print the invalid argument error in Yellow
 		errMsg := strings.TrimSpace(buf.String())
 		fmt.Fprintln(os.Stderr, ColorYellow+"Error: "+errMsg+ColorReset)
-		fmt.Println()
-		PrintHelp()
+		fmt.Fprintln(os.Stderr, ColorYellow+"Run 'copy-pm-files.exe -help' to see full usage instructions."+ColorReset)
 		os.Exit(2)
 	}
 
@@ -94,8 +93,8 @@ func parseArgs() AppArgs {
 
 	if !configSpecified && !sourceSpecified {
 		fmt.Fprintln(os.Stderr, ColorYellow+"Warning: No configuration file was specified and the --source option remains undefined."+ColorReset)
-		fmt.Fprintln(os.Stderr)
-		PrintHelp()
+		fmt.Println()
+		fmt.Fprintln(os.Stderr, ColorDim+"Run 'copy-pm-files.exe -help' to see full usage instructions."+ColorReset)
 		os.Exit(1)
 	}
 
@@ -103,7 +102,7 @@ func parseArgs() AppArgs {
 	if fs.NArg() > 0 {
 		fmt.Fprintln(os.Stderr, ColorYellow+fmt.Sprintf("Error: unexpected positional argument(s): %v", fs.Args())+ColorReset)
 		fmt.Println()
-		PrintHelp()
+		fmt.Fprintln(os.Stderr, ColorDim+"Run 'copy-pm-files.exe -help' to see full usage instructions."+ColorReset)
 		os.Exit(1)
 	}
 
@@ -203,12 +202,12 @@ func readRegistryConfig() (*PathBlock, error) {
 	defer k.Close()
 
 	pb := &PathBlock{Dp: true}
-	
+
 	debugPaths, _, err := k.GetStringsValue("sourcePathsDebug")
 	if err == nil {
 		pb.Src.Debug = debugPaths
 	}
-	
+
 	releasePaths, _, err := k.GetStringsValue("sourcePathsRelease")
 	if err == nil {
 		pb.Src.Release = releasePaths
