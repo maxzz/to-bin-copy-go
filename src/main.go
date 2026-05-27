@@ -19,33 +19,36 @@ func main() {
 	// Parse CLI arguments
 	args := parseArgs()
 
-	// Get resolved source paths and destination configurations
-	paths, dstCfg, mode, sourceUsed, configFilePath, err := GetSourcePaths(args)
+	// Initialize the global force copy flag
+	ForceCopy = args.Force
+
+	// Resolve the config items to process
+	items, configFilePath, err := ResolveConfigAndItems(args)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, ColorRed+"Error: %v\n\n"+ColorReset, err)
 		PrintHelp()
 		os.Exit(1)
 	}
 
+	mode := "Debug"
+	if args.IsRelease {
+		mode = "Release"
+	}
+
 	fmt.Println(ColorCyan + "==================================================" + ColorReset)
 	fmt.Println(ColorCyan + ColorBold + "  DigitalPersona PM File Copier (Go Version) v" + Version + ColorReset)
 	fmt.Println(ColorCyan + "==================================================" + ColorReset)
 	fmt.Printf("Target Files Mode: %s (Debug or Release builds)\n", ColorGreen+mode+ColorReset)
-	fmt.Printf("Source Resolved:   %s\n", ColorGreen+sourceUsed+ColorReset)
 	if configFilePath != "" {
 		fmt.Printf("Config File Used:  %s\n", ColorGreen+configFilePath+ColorReset)
 	}
-	fmt.Println("Source Paths:")
-	for _, p := range paths {
-		fmt.Printf("  - %s\n", p)
-	}
-	if dstCfg.Win32 != "" || dstCfg.X64 != "" {
-		fmt.Println("Custom Destination Paths:")
-		if dstCfg.Win32 != "" {
-			fmt.Printf("  - Win32: %s\n", dstCfg.Win32)
-		}
-		if dstCfg.X64 != "" {
-			fmt.Printf("  - x64:   %s\n", dstCfg.X64)
+
+	fmt.Println("Items to process:")
+	for _, item := range items {
+		if item.Name != "" {
+			fmt.Printf("  - %s (Active: %t)\n", ColorGreen+item.Name+ColorReset, item.IsActive)
+		} else {
+			fmt.Printf("  - %s (Active: %t)\n", ColorGreen+"(unnamed)"+ColorReset, item.IsActive)
 		}
 	}
 	fmt.Println(ColorCyan + "==================================================" + ColorReset)
@@ -60,7 +63,7 @@ func main() {
 	}
 
 	// Execute copy process
-	CopyPmFilesToBin(paths, dstCfg)
+	ExecuteItems(items, args.IsRelease)
 
 	fmt.Println("\nProcess complete.")
 }

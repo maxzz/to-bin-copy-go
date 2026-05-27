@@ -13,16 +13,22 @@ import (
 )
 
 type Config struct {
-	Dp DpConfig `json:"dp"`
+	Items []ConfigItem `json:"items"`
 }
 
-type DpConfig struct {
-	Paths PathsConfig `json:"paths"`
+type ConfigItem struct {
+	Name     string     `json:"name"`
+	IsActive bool       `json:"isActive"`
+	Paths    *PathBlock `json:"paths,omitempty"`
+	Files    []FileBlock `json:"files,omitempty"`
 }
 
-type PathsConfig struct {
-	Src SrcConfig `json:"src"`
-	Dst DstConfig `json:"dst"`
+type PathBlock struct {
+	Dp              bool        `json:"dp"`
+	Src             SrcConfig   `json:"src"`
+	Dst             DstConfig   `json:"dst"`
+	SrcFilesInclude []string    `json:"srcFilesInclude,omitempty"`
+	SrcFilesExclude []string    `json:"srcFilesExclude,omitempty"`
 }
 
 type SrcConfig struct {
@@ -35,10 +41,17 @@ type DstConfig struct {
 	X64   string `json:"x64"`
 }
 
+type FileBlock struct {
+	Src string `json:"src"`
+	Dst string `json:"dst"`
+}
+
 type AppArgs struct {
 	IsRelease  bool
 	ConfigPath string
 	Source     string
+	SetName    string
+	Force      bool
 }
 
 func parseArgs() AppArgs {
@@ -51,6 +64,8 @@ func parseArgs() AppArgs {
 	fs.BoolVar(&args.IsRelease, "release", false, "Run in Release mode (default is Debug mode)")
 	fs.StringVar(&args.ConfigPath, "config", "config.json", "Path to the configuration JSON file")
 	fs.StringVar(&args.Source, "source", "", "Comma-separated list of custom source directories (bypasses config file/registry)")
+	fs.StringVar(&args.SetName, "set", "", "Name of a specific configuration set to execute")
+	fs.BoolVar(&args.Force, "force", false, "Force copy all files regardless of timestamps")
 
 	err := fs.Parse(os.Args[1:])
 	if err != nil {
@@ -179,7 +194,7 @@ func loadConfig(path string) (*Config, error) {
 }
 
 // readRegistryConfig tries to read the configuration from Windows Registry.
-func readRegistryConfig() (*Config, error) {
+func readRegistryConfig() (*PathBlock, error) {
 	const regPath = `SOFTWARE\SergeiMenchenin\CopyPmFilesToBin`
 	k, err := registry.OpenKey(registry.CURRENT_USER, regPath, registry.QUERY_VALUE)
 	if err != nil {
@@ -187,19 +202,19 @@ func readRegistryConfig() (*Config, error) {
 	}
 	defer k.Close()
 
-	cfg := &Config{}
+	pb := &PathBlock{Dp: true}
 	
 	debugPaths, _, err := k.GetStringsValue("sourcePathsDebug")
 	if err == nil {
-		cfg.Dp.Paths.Src.Debug = debugPaths
+		pb.Src.Debug = debugPaths
 	}
 	
 	releasePaths, _, err := k.GetStringsValue("sourcePathsRelease")
 	if err == nil {
-		cfg.Dp.Paths.Src.Release = releasePaths
+		pb.Src.Release = releasePaths
 	}
 
-	return cfg, nil
+	return pb, nil
 }
 
 // splitUnescaped splits a string s by an unescaped separator sep (e.g. comma),
@@ -248,77 +263,92 @@ func cleanAndNormalizePaths(paths []string) []string {
 	return normalized
 }
 
-// GetSourcePaths resolves which source paths and destination paths to use.
-// It returns (paths, dstConfig, modeName, sourceUsed, configFilePath, err).
-func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, string, error) {
-	mode := "Debug"
-	if args.IsRelease {
-		mode = "Release"
-	}
-
-	var emptyDst DstConfig
-
+// ResolveConfigAndItems resolves the selected items to process and returns (items, configFilePath, error).
+func ResolveConfigAndItems(args AppArgs) ([]ConfigItem, string, error) {
 	// 1. If explicit sources are given via CLI
 	if args.Source != "" {
 		paths := splitUnescaped(args.Source, ',', '\\')
-		return cleanAndNormalizePaths(paths), emptyDst, mode, "CLI Flag", "", nil
-	}
-
-	// Helper to extract the right paths from Config
-	getPathsFromConfig := func(cfg *Config) []string {
-		if args.IsRelease {
-			return cfg.Dp.Paths.Src.Release
+		cleaned := cleanAndNormalizePaths(paths)
+		item := ConfigItem{
+			Name:     "CLI Source Flag Override",
+			IsActive: true,
+			Paths: &PathBlock{
+				Dp: true,
+				Src: SrcConfig{
+					Debug:   cleaned,
+					Release: cleaned,
+				},
+			},
 		}
-		return cfg.Dp.Paths.Src.Debug
-	}
-
-	// Helper to normalize the custom destinations if specified in config
-	normalizeDst := func(dst DstConfig) DstConfig {
-		if dst.Win32 != "" {
-			dst.Win32 = filepath.Clean(filepath.FromSlash(dst.Win32))
-		}
-		if dst.X64 != "" {
-			dst.X64 = filepath.Clean(filepath.FromSlash(dst.X64))
-		}
-		return dst
+		return []ConfigItem{item}, "", nil
 	}
 
 	// 2. Try loading config from specified config path (or default "config.json")
 	cfg, err := loadConfig(args.ConfigPath)
+	var loadedPath string
 	if err == nil {
-		paths := getPathsFromConfig(cfg)
-		if len(paths) > 0 {
-			absPath, _ := filepath.Abs(args.ConfigPath)
-			return cleanAndNormalizePaths(paths), normalizeDst(cfg.Dp.Paths.Dst), mode, fmt.Sprintf("Config File (%s)", args.ConfigPath), absPath, nil
-		}
-	}
-
-	// 2b. If the specified config was "config.json", also try next to the executable
-	if args.ConfigPath == "config.json" {
-		if exePath, err := os.Executable(); err == nil {
+		loadedPath, _ = filepath.Abs(args.ConfigPath)
+	} else if args.ConfigPath == "config.json" {
+		// 2b. Try next to the executable if default "config.json" failed to load
+		if exePath, errExe := os.Executable(); errExe == nil {
 			exeDir := filepath.Dir(exePath)
 			altConfigPath := filepath.Join(exeDir, "config.json")
 			if altConfigPath != args.ConfigPath {
-				if cfg, err := loadConfig(altConfigPath); err == nil {
-					paths := getPathsFromConfig(cfg)
-					if len(paths) > 0 {
-						absPath, _ := filepath.Abs(altConfigPath)
-						return cleanAndNormalizePaths(paths), normalizeDst(cfg.Dp.Paths.Dst), mode, fmt.Sprintf("Config File (%s)", altConfigPath), absPath, nil
-					}
+				cfg, errExe = loadConfig(altConfigPath)
+				if errExe == nil {
+					loadedPath, _ = filepath.Abs(altConfigPath)
+					err = nil // clear error
 				}
 			}
 		}
 	}
 
-	// 3. Fallback to Windows Registry
-	regCfg, err := readRegistryConfig()
-	if err == nil {
-		paths := getPathsFromConfig(regCfg)
-		if len(paths) > 0 {
-			return cleanAndNormalizePaths(paths), normalizeDst(regCfg.Dp.Paths.Dst), mode, "Windows Registry", "", nil
+	var items []ConfigItem
+	if err == nil && cfg != nil && len(cfg.Items) > 0 {
+		// Filter items based on SetName
+		if args.SetName != "" {
+			for _, item := range cfg.Items {
+				if strings.EqualFold(item.Name, args.SetName) {
+					items = append(items, item)
+				}
+			}
+			if len(items) == 0 {
+				return nil, "", fmt.Errorf("no configuration set found with name %q", args.SetName)
+			}
+		} else {
+			// Select active items
+			for _, item := range cfg.Items {
+				if item.IsActive {
+					items = append(items, item)
+				}
+			}
 		}
 	}
 
-	// 4. No paths found
-	return nil, emptyDst, mode, "", "", fmt.Errorf("no source paths found! Please configure them in config.json, Windows Registry, or pass via the -source flag")
+	if len(items) > 0 {
+		return items, loadedPath, nil
+	}
+
+	// 3. Fallback to Windows Registry
+	regBlock, regErr := readRegistryConfig()
+	if regErr == nil && regBlock != nil {
+		// Verify if registry has any paths
+		if len(regBlock.Src.Debug) > 0 || len(regBlock.Src.Release) > 0 {
+			item := ConfigItem{
+				Name:     "Windows Registry Fallback",
+				IsActive: true,
+				Paths:    regBlock,
+			}
+			return []ConfigItem{item}, "", nil
+		}
+	}
+
+	// Compile a meaningful error message
+	var errMsg string
+	if err != nil {
+		errMsg = fmt.Sprintf("failed to load config file: %v. Registry fallback also failed", err)
+	} else {
+		errMsg = "no source paths or active items found in config file. Registry fallback also failed"
+	}
+	return nil, "", fmt.Errorf("%s", errMsg)
 }

@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -41,63 +42,204 @@ var x64Files = []string{
 	"DsDashboard.dll",
 }
 
-// CopyPmFilesToBin executes the copy operations from source paths to the target folders.
-func CopyPmFilesToBin(sourcePaths []string, dstCfg DstConfig) {
-	var bIsWin32, bIsWin64 bool
+var ForceCopy bool
+
+// ExecuteItems executes the copy operations for the selected config items.
+func ExecuteItems(items []ConfigItem, isRelease bool) {
 	var bDpAgentIsDead bool
 
-	for _, sourcePath := range sourcePaths {
-		sourcePathLower := strings.ToLower(sourcePath)
-
-		if strings.HasSuffix(sourcePathLower, "win32") {
-			bIsWin32 = true
-
-			if !bDpAgentIsDead {
-				bDpAgentIsDead = KillDpAgent()
+	for _, item := range items {
+		if item.Paths != nil {
+			sourcePaths := item.Paths.Src.Debug
+			if isRelease {
+				sourcePaths = item.Paths.Src.Release
 			}
 
-			bin32Folder := dstCfg.Win32
-			if bin32Folder == "" {
-				programs32Folder := os.Getenv("ProgramFiles(x86)")
-				if programs32Folder == "" {
-					programs32Folder = `C:\Program Files (x86)`
+			dstCfg := item.Paths.Dst
+			// Normalize custom destination paths
+			if dstCfg.Win32 != "" {
+				dstCfg.Win32 = filepath.Clean(filepath.FromSlash(dstCfg.Win32))
+			}
+			if dstCfg.X64 != "" {
+				dstCfg.X64 = filepath.Clean(filepath.FromSlash(dstCfg.X64))
+			}
+
+			var bIsWin32, bIsWin64 bool
+
+			for _, sourcePath := range sourcePaths {
+				sourcePathClean := filepath.Clean(filepath.FromSlash(strings.TrimSpace(sourcePath)))
+				sourcePathLower := strings.ToLower(sourcePathClean)
+
+				if strings.HasSuffix(sourcePathLower, "win32") {
+					bIsWin32 = true
+
+					if !bDpAgentIsDead {
+						bDpAgentIsDead = KillDpAgent()
+					}
+
+					bin32Folder := dstCfg.Win32
+					if bin32Folder == "" {
+						programs32Folder := os.Getenv("ProgramFiles(x86)")
+						if programs32Folder == "" {
+							programs32Folder = `C:\Program Files (x86)`
+						}
+						bin32Folder = filepath.Join(programs32Folder, `DigitalPersona\Bin`)
+					}
+
+					fmt.Printf("Processing %s -> %s\n", sourcePathClean, bin32Folder)
+
+					if item.Paths.Dp {
+						for _, sFileName := range win32Files {
+							CopyFileToBin(sourcePathClean, sFileName, bin32Folder)
+						}
+					} else {
+						// Custom include/exclude regex matching
+						err := copyCustomFiles(sourcePathClean, bin32Folder, item.Paths.SrcFilesInclude, item.Paths.SrcFilesExclude)
+						if err != nil {
+							fmt.Fprintf(os.Stderr, ColorRed+"  Error copying custom files: %v\n"+ColorReset, err)
+						}
+					}
+
+				} else if strings.HasSuffix(sourcePathLower, "x64") {
+					bIsWin64 = true
+
+					if !bDpAgentIsDead {
+						bDpAgentIsDead = KillDpAgent()
+					}
+
+					bin64Folder := dstCfg.X64
+					if bin64Folder == "" {
+						programs64Folder := os.Getenv("ProgramFiles")
+						if programs64Folder == "" {
+							programs64Folder = `C:\Program Files`
+						}
+						bin64Folder = filepath.Join(programs64Folder, `DigitalPersona\Bin`)
+					}
+
+					fmt.Printf("Processing %s -> %s\n", sourcePathClean, bin64Folder)
+
+					if item.Paths.Dp {
+						for _, sFileName := range x64Files {
+							CopyFileToBin(sourcePathClean, sFileName, bin64Folder)
+						}
+					} else {
+						// Custom include/exclude regex matching
+						err := copyCustomFiles(sourcePathClean, bin64Folder, item.Paths.SrcFilesInclude, item.Paths.SrcFilesExclude)
+						if err != nil {
+							fmt.Fprintf(os.Stderr, ColorRed+"  Error copying custom files: %v\n"+ColorReset, err)
+						}
+					}
 				}
-				bin32Folder = filepath.Join(programs32Folder, `DigitalPersona\Bin`)
 			}
 
-			fmt.Printf("From %s to %s\n", sourcePath, bin32Folder)
-
-			for _, sFileName := range win32Files {
-				CopyFileToBin(sourcePath, sFileName, bin32Folder)
+			if !bIsWin32 && !bIsWin64 && len(sourcePaths) > 0 {
+				fmt.Println(ColorYellow + "Warning: No valid source paths found ending with 'Win32' or 'x64'." + ColorReset)
 			}
+		}
 
-		} else if strings.HasSuffix(sourcePathLower, "x64") {
-			bIsWin64 = true
-
-			if !bDpAgentIsDead {
-				bDpAgentIsDead = KillDpAgent()
-			}
-
-			bin64Folder := dstCfg.X64
-			if bin64Folder == "" {
-				programs64Folder := os.Getenv("ProgramFiles")
-				if programs64Folder == "" {
-					programs64Folder = `C:\Program Files`
+		if len(item.Files) > 0 {
+			fmt.Printf("Processing individual files list...\n")
+			for _, fileBlock := range item.Files {
+				if fileBlock.Src == "" || fileBlock.Dst == "" {
+					continue
 				}
-				bin64Folder = filepath.Join(programs64Folder, `DigitalPersona\Bin`)
-			}
+				
+				if !bDpAgentIsDead {
+					// Preemptively kill DPAgent if any file is copied
+					bDpAgentIsDead = KillDpAgent()
+				}
 
-			fmt.Printf("From %s to %s\n", sourcePath, bin64Folder)
-
-			for _, sFileName := range x64Files {
-				CopyFileToBin(sourcePath, sFileName, bin64Folder)
+				srcClean := filepath.Clean(filepath.FromSlash(strings.TrimSpace(fileBlock.Src)))
+				dstClean := filepath.Clean(filepath.FromSlash(strings.TrimSpace(fileBlock.Dst)))
+				
+				CopyFileWithChecks(srcClean, dstClean, ForceCopy)
 			}
 		}
 	}
+}
 
-	if !bIsWin32 && !bIsWin64 {
-		fmt.Println(ColorYellow + "Warning: No valid source paths found ending with 'Win32' or 'x64'." + ColorReset)
+// CopyPmFilesToBin is a legacy wrapper for backwards compatibility with tests and older invocation patterns.
+func CopyPmFilesToBin(sourcePaths []string, dstCfg DstConfig) {
+	item := ConfigItem{
+		Name:     "Legacy Run",
+		IsActive: true,
+		Paths: &PathBlock{
+			Dp: true,
+			Src: SrcConfig{
+				Debug:   sourcePaths,
+				Release: sourcePaths,
+			},
+			Dst: dstCfg,
+		},
 	}
+	ExecuteItems([]ConfigItem{item}, false)
+}
+
+func copyCustomFiles(sourceDir, destDir string, includes, excludes []string) error {
+	// Compile regex patterns first
+	var includeRegexes []*regexp.Regexp
+	for _, p := range includes {
+		re, err := regexp.Compile(p)
+		if err != nil {
+			return fmt.Errorf("invalid include pattern %q: %v", p, err)
+		}
+		includeRegexes = append(includeRegexes, re)
+	}
+
+	var excludeRegexes []*regexp.Regexp
+	for _, p := range excludes {
+		re, err := regexp.Compile(p)
+		if err != nil {
+			return fmt.Errorf("invalid exclude pattern %q: %v", p, err)
+		}
+		excludeRegexes = append(excludeRegexes, re)
+	}
+
+	// Walk directory recursively
+	err := filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+
+		// Get relative path from sourceDir to this file
+		relPath, err := filepath.Rel(sourceDir, path)
+		if err != nil {
+			return err
+		}
+
+		// Normalize backslashes to forward slashes for matching patterns
+		relPathSlash := filepath.ToSlash(relPath)
+
+		// Match includes (if empty, matches all)
+		included := len(includeRegexes) == 0
+		for _, re := range includeRegexes {
+			if re.MatchString(relPathSlash) {
+				included = true
+				break
+			}
+		}
+
+		// Match excludes
+		excluded := false
+		for _, re := range excludeRegexes {
+			if re.MatchString(relPathSlash) {
+				excluded = true
+				break
+			}
+		}
+
+		if included && !excluded {
+			targetPath := filepath.Join(destDir, relPath)
+			CopyFileWithChecks(path, targetPath, ForceCopy)
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 // isSharingViolation checks if the error is a Windows sharing violation (ERROR_SHARING_VIOLATION = 32).
@@ -119,51 +261,57 @@ func isSharingViolation(err error) bool {
 
 // CopyFileToBin copies a single file if it's newer, and renames on sharing violation.
 func CopyFileToBin(sourcePath, sFileName, sDestPath string) {
-	sFullSourcePath := filepath.Join(sourcePath, sFileName)
-	sFullDestPath := filepath.Join(sDestPath, sFileName)
+	CopyFileWithChecks(filepath.Join(sourcePath, sFileName), filepath.Join(sDestPath, sFileName), ForceCopy)
+}
 
-	sourceFileInfo, err := os.Stat(sFullSourcePath)
+// CopyFileWithChecks copies a single file with force/timestamp checks and in-use renaming fallback.
+func CopyFileWithChecks(srcPath, dstPath string, force bool) {
+	sourceFileInfo, err := os.Stat(srcPath)
 	if os.IsNotExist(err) {
-		fmt.Println(ColorRed + "  No source file!!!: " + sFullDestPath + ColorReset)
+		fmt.Println(ColorRed + "  No source file!!!: " + srcPath + ColorReset)
 		return
 	} else if err != nil {
-		fmt.Fprintln(os.Stderr, ColorRed+fmt.Sprintf("  Error reading source file %s: %v", sFullSourcePath, err)+ColorReset)
+		fmt.Fprintln(os.Stderr, ColorRed+fmt.Sprintf("  Error reading source file %s: %v", srcPath, err)+ColorReset)
 		return
 	}
 
 	sourceFileTime := sourceFileInfo.ModTime().UTC()
 	bTimesOK := true
 
-	destFileInfo, err := os.Stat(sFullDestPath)
-	if err == nil {
-		destFileTime := destFileInfo.ModTime().UTC()
-		bTimesOK = sourceFileTime.After(destFileTime)
+	if !force {
+		destFileInfo, err := os.Stat(dstPath)
+		if err == nil {
+			destFileTime := destFileInfo.ModTime().UTC()
+			bTimesOK = sourceFileTime.After(destFileTime)
+		}
 	}
 
 	if bTimesOK {
+		sDestDir := filepath.Dir(dstPath)
+		sFileName := filepath.Base(dstPath)
 		for {
-			err := doCopy(sFullSourcePath, sFullDestPath)
+			err := doCopy(srcPath, dstPath)
 			if err == nil {
 				// Success, set the destination file time to match the source file time
-				_ = os.Chtimes(sFullDestPath, sourceFileInfo.ModTime(), sourceFileInfo.ModTime())
-				fmt.Println(ColorGreen + "  Copied " + sFullDestPath + ColorReset)
+				_ = os.Chtimes(dstPath, sourceFileInfo.ModTime(), sourceFileInfo.ModTime())
+				fmt.Println(ColorGreen + "  Copied " + dstPath + ColorReset)
 				break
 			}
 
 			if isSharingViolation(err) {
-				fmt.Println(ColorYellow + "  File in use: " + sFullDestPath + ColorReset)
-				renameErr := RenameDestFile(sDestPath, sFileName)
+				fmt.Println(ColorYellow + "  File in use: " + dstPath + ColorReset)
+				renameErr := RenameDestFile(sDestDir, sFileName)
 				if renameErr != nil {
 					fmt.Fprintln(os.Stderr, ColorRed+fmt.Sprintf("  Failed to rename locked file: %v", renameErr)+ColorReset)
 					break
 				}
 			} else {
-				fmt.Fprintln(os.Stderr, ColorRed+fmt.Sprintf("  Failed copying file %s, error: %v", sFullDestPath, err)+ColorReset)
+				fmt.Fprintln(os.Stderr, ColorRed+fmt.Sprintf("  Failed copying file %s, error: %v", dstPath, err)+ColorReset)
 				break
 			}
 		}
 	} else {
-		fmt.Println(ColorDim + "  Same time, skipping: " + sFileName + ColorReset)
+		fmt.Println(ColorDim + "  Same time, skipping: " + filepath.Base(dstPath) + ColorReset)
 	}
 }
 

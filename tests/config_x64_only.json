@@ -1,19 +1,24 @@
 {
   // 64-bit ONLY copy configuration
-  "dp": {
-    "paths": {
-      "src": {
-        "debug": [
-          "C:/y/c/dp/pm-native/src/~Output/Debug.x64/"
-        ],
-        "release": [
-          "C:/y/c/dp/pm-native/src/~Output/Release.x64"
-        ]
-      },
-      "dst": {
-        "win32": "", // Win32 files are ignored in this run
-        "x64": "C:/Program Files/DigitalPersona/Bin"
+  "items": [
+    {
+      "name": "x64-only",
+      "isActive": true,
+      "paths": {
+        "dp": true,
+        "src": {
+          "debug": [
+            "C:/y/c/dp/pm-native/src/~Output/Debug.x64/"
+          ],
+          "release": [
+            "C:/y/c/dp/pm-native/src/~Output/Release.x64"
+          ]
+        },
+        "dst": {
+          "win32": "", // Win32 files are ignored in this run
+          "x64": "C:/Program Files/DigitalPersona/Bin"
+        }
       }
     }
-  }
+  ]
 }
