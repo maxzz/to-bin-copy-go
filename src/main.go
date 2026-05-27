@@ -13,22 +13,25 @@ func isElevated() bool {
 }
 
 func main() {
+	// Initialize Windows Console for Virtual Terminal (ANSI color) processing
+	initConsole()
+
 	// Parse CLI arguments
 	args := parseArgs()
 
 	// Get resolved source paths and destination configurations
 	paths, dstCfg, mode, sourceUsed, err := GetSourcePaths(args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n\n", err)
+		fmt.Fprintf(os.Stderr, ColorRed+"Error: %v\n\n"+ColorReset, err)
 		PrintHelp()
 		os.Exit(1)
 	}
 
-	fmt.Println("==================================================")
-	fmt.Println("  DigitalPersona PM File Copier (Go Version)")
-	fmt.Println("==================================================")
-	fmt.Printf("Target Files Mode: %s (Debug or Release builds)\n", mode)
-	fmt.Printf("Source Resolved:   %s\n", sourceUsed)
+	fmt.Println(ColorCyan + "==================================================" + ColorReset)
+	fmt.Println(ColorCyan + ColorBold + "  DigitalPersona PM File Copier (Go Version)" + ColorReset)
+	fmt.Println(ColorCyan + "==================================================" + ColorReset)
+	fmt.Printf("Target Files Mode: %s (Debug or Release builds)\n", ColorGreen+mode+ColorReset)
+	fmt.Printf("Source Resolved:   %s\n", ColorGreen+sourceUsed+ColorReset)
 	fmt.Println("Source Paths:")
 	for _, p := range paths {
 		fmt.Printf("  - %s\n", p)
@@ -42,15 +45,15 @@ func main() {
 			fmt.Printf("  - x64:   %s\n", dstCfg.X64)
 		}
 	}
-	fmt.Println("==================================================")
+	fmt.Println(ColorCyan + "==================================================" + ColorReset)
 
 	// Check for Administrator elevation on Windows
 	if !isElevated() {
-		fmt.Println("\nWARNING: This tool is NOT running with Administrator privileges.")
+		fmt.Println(ColorYellow + "\nWARNING: This tool is NOT running with Administrator privileges.")
 		fmt.Println("         Copying files to 'Program Files' will likely fail with 'Access is denied'.")
 		fmt.Println("         Please run from an elevated command prompt (Administrator), or")
 		fmt.Println("         right-click the executable and select 'Run as administrator'.")
-		fmt.Println("==================================================")
+		fmt.Println("==================================================" + ColorReset)
 	}
 
 	// Execute copy process

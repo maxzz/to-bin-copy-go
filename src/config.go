@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -42,17 +43,33 @@ type AppArgs struct {
 
 func parseArgs() AppArgs {
 	var args AppArgs
-	flag.Usage = func() {
+	fs := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	var buf bytes.Buffer
+	fs.SetOutput(&buf)
+	fs.Usage = func() {} // Override default usage behavior, we will print help ourselves
+
+	fs.BoolVar(&args.IsRelease, "release", false, "Run in Release mode (default is Debug mode)")
+	fs.StringVar(&args.ConfigPath, "config", "config.json", "Path to the configuration JSON file")
+	fs.StringVar(&args.Source, "source", "", "Comma-separated list of custom source directories (bypasses config file/registry)")
+
+	err := fs.Parse(os.Args[1:])
+	if err != nil {
+		if err == flag.ErrHelp {
+			PrintHelp()
+			os.Exit(0)
+		}
+		// Clean up and print the invalid argument error in Yellow
+		errMsg := strings.TrimSpace(buf.String())
+		fmt.Fprintln(os.Stderr, ColorYellow+"Error: "+errMsg+ColorReset)
+		fmt.Println()
 		PrintHelp()
+		os.Exit(2)
 	}
-	flag.BoolVar(&args.IsRelease, "release", false, "Run in Release mode (default is Debug mode)")
-	flag.StringVar(&args.ConfigPath, "config", "config.json", "Path to the configuration JSON file")
-	flag.StringVar(&args.Source, "source", "", "Comma-separated list of custom source directories (bypasses config file/registry)")
-	flag.Parse()
 
 	// If there are any unexpected positional arguments, treat it as an invalid call.
-	if flag.NArg() > 0 {
-		fmt.Fprintf(os.Stderr, "Error: unexpected positional argument(s): %v\n\n", flag.Args())
+	if fs.NArg() > 0 {
+		fmt.Fprintln(os.Stderr, ColorYellow+fmt.Sprintf("Error: unexpected positional argument(s): %v", fs.Args())+ColorReset)
+		fmt.Println()
 		PrintHelp()
 		os.Exit(1)
 	}

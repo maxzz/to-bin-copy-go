@@ -96,7 +96,7 @@ func CopyPmFilesToBin(sourcePaths []string, dstCfg DstConfig) {
 	}
 
 	if !bIsWin32 && !bIsWin64 {
-		fmt.Println("Warning: No valid source paths found ending with 'Win32' or 'x64'.")
+		fmt.Println(ColorYellow + "Warning: No valid source paths found ending with 'Win32' or 'x64'." + ColorReset)
 	}
 }
 
@@ -124,10 +124,10 @@ func CopyFileToBin(sourcePath, sFileName, sDestPath string) {
 
 	sourceFileInfo, err := os.Stat(sFullSourcePath)
 	if os.IsNotExist(err) {
-		fmt.Printf("  No source file!!!: %s\n", sFullDestPath)
+		fmt.Println(ColorRed + "  No source file!!!: " + sFullDestPath + ColorReset)
 		return
 	} else if err != nil {
-		fmt.Printf("  Error reading source file %s: %v\n", sFullSourcePath, err)
+		fmt.Fprintln(os.Stderr, ColorRed+fmt.Sprintf("  Error reading source file %s: %v", sFullSourcePath, err)+ColorReset)
 		return
 	}
 
@@ -146,24 +146,24 @@ func CopyFileToBin(sourcePath, sFileName, sDestPath string) {
 			if err == nil {
 				// Success, set the destination file time to match the source file time
 				_ = os.Chtimes(sFullDestPath, sourceFileInfo.ModTime(), sourceFileInfo.ModTime())
-				fmt.Printf("  Copied %s\n", sFullDestPath)
+				fmt.Println(ColorGreen + "  Copied " + sFullDestPath + ColorReset)
 				break
 			}
 
 			if isSharingViolation(err) {
-				fmt.Printf("  File in use: %s\n", sFullDestPath)
+				fmt.Println(ColorYellow + "  File in use: " + sFullDestPath + ColorReset)
 				renameErr := RenameDestFile(sDestPath, sFileName)
 				if renameErr != nil {
-					fmt.Printf("  Failed to rename locked file: %v\n", renameErr)
+					fmt.Fprintln(os.Stderr, ColorRed+fmt.Sprintf("  Failed to rename locked file: %v", renameErr)+ColorReset)
 					break
 				}
 			} else {
-				fmt.Printf("  Failed copying file %s, error: %v\n", sFullDestPath, err)
+				fmt.Fprintln(os.Stderr, ColorRed+fmt.Sprintf("  Failed copying file %s, error: %v", sFullDestPath, err)+ColorReset)
 				break
 			}
 		}
 	} else {
-		fmt.Printf("  Same time, skipping: %s\n", sFileName)
+		fmt.Println(ColorDim + "  Same time, skipping: " + sFileName + ColorReset)
 	}
 }
 
