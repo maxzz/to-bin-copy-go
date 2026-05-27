@@ -33,6 +33,7 @@ This utility is a direct conversion of the original C# WinForms application `Cop
 - `src/`: Directory containing all Go source files.
   - `main.go`: Entry point and program orchestration.
   - `config.go`: Argument parsing, JSON configuration, and Windows Registry integration.
+  - `help.go`: Modular help output displaying usage, default options, and behaviors.
   - `process.go`: Graceful Win32 process search and close logic for `DPAgent.exe`.
   - `copy.go`: Core copy loop, timestamp comparison, and locked file renaming.
   - `copy_test.go`: Unit tests for file utility behaviors.

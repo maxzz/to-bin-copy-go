@@ -19,16 +19,8 @@ func main() {
 	// Get resolved source paths and destination configurations
 	paths, dstCfg, mode, sourceUsed, err := GetSourcePaths(args)
 	if err != nil {
-		fmt.Printf("Error: %v\n\n", err)
-		fmt.Println("Usage of copy-pm-files-to-bin:")
-		fmt.Println("  to-bin-copy-go [flags]")
-		fmt.Println("\nFlags:")
-		fmt.Println("  -release")
-		fmt.Println("        Run in Release mode (default is Debug mode)")
-		fmt.Println("  -config string")
-		fmt.Println("        Path to the configuration JSON file (default \"config.json\")")
-		fmt.Println("  -source string")
-		fmt.Println("        Comma-separated list of custom source directories (bypasses config file/registry)")
+		fmt.Fprintf(os.Stderr, "Error: %v\n\n", err)
+		PrintHelp()
 		os.Exit(1)
 	}
 

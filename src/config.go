@@ -42,10 +42,21 @@ type AppArgs struct {
 
 func parseArgs() AppArgs {
 	var args AppArgs
+	flag.Usage = func() {
+		PrintHelp()
+	}
 	flag.BoolVar(&args.IsRelease, "release", false, "Run in Release mode (default is Debug mode)")
 	flag.StringVar(&args.ConfigPath, "config", "config.json", "Path to the configuration JSON file")
 	flag.StringVar(&args.Source, "source", "", "Comma-separated list of custom source directories (bypasses config file/registry)")
 	flag.Parse()
+
+	// If there are any unexpected positional arguments, treat it as an invalid call.
+	if flag.NArg() > 0 {
+		fmt.Fprintf(os.Stderr, "Error: unexpected positional argument(s): %v\n\n", flag.Args())
+		PrintHelp()
+		os.Exit(1)
+	}
+
 	return args
 }
 
