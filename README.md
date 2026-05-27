@@ -95,6 +95,8 @@ First, make sure you have Go installed on your machine.
 - `-source <paths>`: Comma-separated list of paths (e.g. `-source "C:/src/Win32,C:/src/x64"`), bypassing any registry or config file settings.
   - **Handling Spaces**: If any paths contain spaces, you **must enclose the entire comma-separated list of paths in double quotes**. For example:
     `.\copy-pm-files.exe -source "C:/Folder With Spaces/Win32,C:/Other Folder/x64"`
+  - **Handling Commas**: If a directory or file name contains a literal comma (`,`), you **must escape the comma with a backslash (`\,`)** inside the list. For example:
+    `.\copy-pm-files.exe -source "C:/Folder\, With Comma/Win32,C:/NormalFolder/x64"`
 
 ### Examples
 

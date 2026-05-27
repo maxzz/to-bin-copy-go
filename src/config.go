@@ -184,6 +184,42 @@ func readRegistryConfig() (*Config, error) {
 	return cfg, nil
 }
 
+// splitUnescaped splits a string s by an unescaped separator sep (e.g. comma),
+// using escape (e.g. backslash) to allow literal separators inside elements.
+// Any occurrence of `\<sep>` (e.g. `\,`) is converted into `<sep>`.
+// Other backslashes (such as standard Windows path backslashes like `\D`) are fully preserved.
+func splitUnescaped(s string, sep rune, escape rune) []string {
+	var segments []string
+	var current strings.Builder
+	runes := []rune(s)
+	inEscape := false
+
+	for i := 0; i < len(runes); i++ {
+		r := runes[i]
+		if inEscape {
+			if r == sep || r == escape {
+				current.WriteRune(r)
+			} else {
+				current.WriteRune(escape)
+				current.WriteRune(r)
+			}
+			inEscape = false
+		} else if r == escape {
+			inEscape = true
+		} else if r == sep {
+			segments = append(segments, current.String())
+			current.Reset()
+		} else {
+			current.WriteRune(r)
+		}
+	}
+	if inEscape {
+		current.WriteRune(escape)
+	}
+	segments = append(segments, current.String())
+	return segments
+}
+
 // cleanAndNormalizePaths converts both backslashes and forward slashes to target OS separators,
 // and removes any trailing slashes or redundant directory items.
 func cleanAndNormalizePaths(paths []string) []string {
@@ -206,7 +242,7 @@ func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
 
 	// 1. If explicit sources are given via CLI
 	if args.Source != "" {
-		paths := strings.Split(args.Source, ",")
+		paths := splitUnescaped(args.Source, ',', '\\')
 		return cleanAndNormalizePaths(paths), emptyDst, mode, "CLI Flag", nil
 	}
 
