@@ -1,21 +1,21 @@
 {
-  // Full dual architecture configuration containing comments and mixed slash paths
+  // Full dual architecture configuration
   "dp": {
     "paths": {
       "src": {
         "debug": [
           "C:/y/c/dp/pm-native/src/~Output/Debug.Win32/",
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.x64"
+          "C:/y/c/dp/pm-native/src/~Output/Debug.x64"
         ],
         "release": [
           "C:/y/c/dp/pm-native/src/~Output/Release.Win32",
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64/"
+          "C:/y/c/dp/pm-native/src/~Output/Release.x64/"
         ]
       },
       "dst": {
         // Specify target destination locations
         "win32": "C:/Program Files (x86)/DigitalPersona/Bin/",
-        "x64": "C:\\Program Files\\DigitalPersona\\Bin"
+        "x64": "C:/Program Files/DigitalPersona/Bin"
       }
     }
   }

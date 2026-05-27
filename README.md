@@ -134,7 +134,9 @@ If you prefer using a `config.json` file rather than command-line arguments or t
 
 ### Flexible Path Syntax (Slashes & Normalization)
 - **Mixed Slashes**: Both forward slashes (`/`) and backslashes (`\`) are fully supported.
-- **Normalization**: Paths are automatically cleaned and normalized to match the host operating system's standard.
+- **Forward Slashes**: Use `/` in configuration paths (recommended; no escaping required in JSON).
+- **Backslashes**: Windows-style `\` paths are also accepted at runtime and normalized automatically.
+- **Normalization**: Paths are automatically cleaned to match the host operating system's standard.
 - **Trailing Slashes**: Trailing slashes are automatically stripped (e.g., `C:/Folder/` becomes `C:\Folder`), preventing errors in suffix matching or folder joins.
 
 ### Comments Support
@@ -172,7 +174,7 @@ The configuration file is written in standard JSON format (with comment support)
         ],
         "release": [
           "C:/y/c/dp/pm-native/src/~Output/Release.Win32",
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64/"
+          "C:/y/c/dp/pm-native/src/~Output/Release.x64/"
         ]
       },
       "dst": {

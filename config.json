@@ -4,19 +4,19 @@
      This config file can now include:
      - Single-line comments starting with //
      - Block comments starting with /* ... * /
-     - Both backslashes and forward slashes in directory paths
+     - Forward slashes in directory paths (trailing slashes are stripped automatically)
   */
   "dp": {
     "paths": {
       "src": {
-        // Source directories where the built files reside (mix of / and \ are supported, trailing slashes will be stripped automatically)
+        // Source directories where the built files reside
         "debug": [
           "C:/y/c/dp/pm-native/src/~Output/Debug.Win32/",
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.x64"
+          "C:/y/c/dp/pm-native/src/~Output/Debug.x64"
         ],
         "release": [
           "C:/y/c/dp/pm-native/src/~Output/Release.Win32",
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64/"
+          "C:/y/c/dp/pm-native/src/~Output/Release.x64/"
         ]
       },
       "dst": {
