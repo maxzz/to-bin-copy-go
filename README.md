@@ -89,7 +89,7 @@ First, make sure you have Go installed on your machine.
 
 ### Command-Line Arguments
 
-- `-release`: Run in Release mode (looks for Release paths instead of Debug paths). By default, it runs in Debug mode.
+- `-release`: Run the utility targeting **Release** compiled files (looks for paths specified in the `sourcePathsRelease` array instead of `sourcePathsDebug`). By default, the utility operates on **Debug** compiled files.
 - `-config <path>`: Path to a JSON configuration file (defaults to `config.json`).
 - `-source <paths>`: Comma-separated list of paths (e.g. `-source "C:\src\Win32,C:\src\x64"`), bypassing any registry or config file settings.
 
@@ -118,9 +118,32 @@ First, make sure you have Go installed on your machine.
 
 ---
 
-## Configuration File Format
+## Detailed Configuration & Target Mode Clarification
 
-If you prefer using a `config.json` file rather than command-line arguments or the Windows Registry, you can place a `config.json` next to your executable. Here is the format:
+### Important: Target Modes vs. Utility Compilation
+It is crucial to clarify that the **Debug** and **Release** target modes **do not describe how this utility itself is compiled**, nor does running with `-release` change the performance characteristics of this Go tool. Rather:
+* **The mode dictates which sets of your project's compiled binary files are being targeted for copying.**
+* When running in **Debug mode** (default), the utility reads the paths where your C++/C# compiler outputs the **Debug target builds** (typically ending with `Debug.Win32` and `Debug.x64`).
+* When running in **Release mode** (using `-release`), the utility targets the paths where your compiler outputs the **Release target builds** (typically ending with `Release.Win32` and `Release.x64`).
+
+---
+
+## Configuration File Format & Structure
+
+If you prefer using a `config.json` file rather than command-line arguments or the Windows Registry, you can place a `config.json` next to your executable.
+
+### Structure Breakdown
+
+The configuration file is written in standard JSON format containing two major string array properties:
+
+1. **`sourcePathsDebug` (Array of Strings)**: 
+   - Defines one or more absolute source directories where the **Debug build** output files are placed. 
+   - The directory names **must** end with either `Win32` or `x64` (case-insensitive) so that the utility knows which architecture target files to copy and where they should be sent.
+2. **`sourcePathsRelease` (Array of Strings)**: 
+   - Defines one or more absolute source directories where the **Release build** output files are placed. 
+   - Similarly, directory names in this list **must** end with either `Win32` or `x64` (case-insensitive).
+
+### JSON Schema Template
 
 ```json
 {
@@ -134,7 +157,8 @@ If you prefer using a `config.json` file rather than command-line arguments or t
   ]
 }
 ```
-*(Note: Backslashes in paths must be escaped as `\\` inside JSON).*
+
+*Note: In JSON format, all folder separator backslashes (`\`) **must be escaped** by doubling them (`\\`).*
 
 ---
 

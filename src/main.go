@@ -35,9 +35,9 @@ func main() {
 	fmt.Println("==================================================")
 	fmt.Println("  DigitalPersona PM File Copier (Go Version)")
 	fmt.Println("==================================================")
-	fmt.Printf("Mode:         %s\n", mode)
-	fmt.Printf("Source:       %s\n", sourceUsed)
-	fmt.Println("Paths:")
+	fmt.Printf("Target Files Mode: %s (Debug or Release builds)\n", mode)
+	fmt.Printf("Source Resolved:   %s\n", sourceUsed)
+	fmt.Println("Source Paths:")
 	for _, p := range paths {
 		fmt.Printf("  - %s\n", p)
 	}
