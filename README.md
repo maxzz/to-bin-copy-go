@@ -132,9 +132,21 @@ It is crucial to clarify that the **Debug** and **Release** target modes **do no
 
 If you prefer using a `config.json` file rather than command-line arguments or the Windows Registry, you can place a `config.json` next to your executable.
 
+### Flexible Path Syntax (Slashes & Normalization)
+- **Mixed Slashes**: Both forward slashes (`/`) and backslashes (`\`) are fully supported.
+- **Normalization**: Paths are automatically cleaned and normalized to match the host operating system's standard.
+- **Trailing Slashes**: Trailing slashes are automatically stripped (e.g., `C:/Folder/` becomes `C:\Folder`), preventing errors in suffix matching or folder joins.
+
+### Comments Support
+This utility supports **JSON comments**. You are free to document your configurations directly inside JSON files using:
+- **Single-line comments** starting with `//`
+- **Multi-line block comments** starting with `/* ... */`
+
+They will be stripped out before parsing, allowing for rich configuration notes.
+
 ### Structure Breakdown
 
-The configuration file is written in standard JSON format. It begins with a top-level key named `"dp"`, which groups all predefined properties. Inside `"dp"`, there is a `"paths"` section that contains `"src"` and `"dst"` fields specifying the source and destination paths:
+The configuration file is written in standard JSON format (with comment support). It begins with a top-level key named `"dp"`, which groups all predefined properties. Inside `"dp"`, there is a `"paths"` section that contains `"src"` and `"dst"` fields specifying the source and destination paths:
 
 1. **`src` (Object)**:
    - **`debug` (Array of Strings)**: Defines one or more absolute source directories where the **Debug build** output files are placed.
@@ -145,23 +157,28 @@ The configuration file is written in standard JSON format. It begins with a top-
    - **`win32` (String)**: Specifies a custom destination folder for Win32 files. If left empty (`""`), it automatically falls back to the default system installation path: `C:\Program Files (x86)\DigitalPersona\Bin`.
    - **`x64` (String)**: Specifies a custom destination folder for x64 files. If left empty (`""`), it automatically falls back to the default system installation path: `C:\Program Files\DigitalPersona\Bin`.
 
-### JSON Schema Template
+### JSON Schema Template (with comments & mixed slashes example)
 
 ```json
 {
+  // Main DigitalPersona Configuration
   "dp": {
     "paths": {
       "src": {
+        // Source folders (mix of slashes and trailing slashes are automatically resolved)
         "debug": [
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.Win32",
+          "C:/y/c/dp/pm-native/src/~Output/Debug.Win32/",
           "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.x64"
         ],
         "release": [
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.Win32",
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64"
+          "C:/y/c/dp/pm-native/src/~Output/Release.Win32",
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64/"
         ]
       },
       "dst": {
+        /*
+           Custom destinations (leave empty to use system defaults)
+        */
         "win32": "",
         "x64": ""
       }
@@ -170,7 +187,7 @@ The configuration file is written in standard JSON format. It begins with a top-
 }
 ```
 
-*Note: In JSON format, all folder separator backslashes (`\`) **must be escaped** by doubling them (`\\`).*
+*Note: In normal JSON strings, backslashes (`\`) should be escaped as `\\`. However, forward slashes `/` are also fully supported without any escaping.*
 
 ---
 

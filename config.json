@@ -1,17 +1,26 @@
 {
+  // DigitalPersona PM File Copier - Main Configuration File
+  /*
+     This config file can now include:
+     - Single-line comments starting with //
+     - Block comments starting with /* ... * /
+     - Both backslashes and forward slashes in directory paths
+  */
   "dp": {
     "paths": {
       "src": {
+        // Source directories where the built files reside (mix of / and \ are supported, trailing slashes will be stripped automatically)
         "debug": [
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.Win32",
+          "C:/y/c/dp/pm-native/src/~Output/Debug.Win32/",
           "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.x64"
         ],
         "release": [
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.Win32",
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64"
+          "C:/y/c/dp/pm-native/src/~Output/Release.Win32",
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64/"
         ]
       },
       "dst": {
+        // Leave empty to use system default paths, or specify target destinations
         "win32": "",
         "x64": ""
       }

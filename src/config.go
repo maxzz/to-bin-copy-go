@@ -49,17 +49,84 @@ func parseArgs() AppArgs {
 	return args
 }
 
-// loadConfig loads configuration from a JSON file.
+// stripComments removes JavaScript/C++ style comments (//... and /*...*/) from a JSON byte slice,
+// while correctly preserving characters inside string literals (even with escaped quotes).
+func stripComments(data []byte) []byte {
+	var result []byte
+	inString := false
+	inLineComment := false
+	inBlockComment := false
+
+	i := 0
+	n := len(data)
+	for i < n {
+		if inLineComment {
+			if data[i] == '\n' {
+				inLineComment = false
+				result = append(result, '\n')
+			}
+			i++
+			continue
+		}
+		if inBlockComment {
+			if i+1 < n && data[i] == '*' && data[i+1] == '/' {
+				inBlockComment = false
+				i += 2
+			} else {
+				i++
+			}
+			continue
+		}
+
+		if inString {
+			if data[i] == '"' {
+				escaped := false
+				for j := i - 1; j >= 0; j-- {
+					if data[j] == '\\' {
+						escaped = !escaped
+					} else {
+						break
+					}
+				}
+				if !escaped {
+					inString = false
+				}
+			}
+			result = append(result, data[i])
+			i++
+			continue
+		}
+
+		if i+1 < n && data[i] == '/' && data[i+1] == '/' {
+			inLineComment = true
+			i += 2
+			continue
+		}
+		if i+1 < n && data[i] == '/' && data[i+1] == '*' {
+			inBlockComment = true
+			i += 2
+			continue
+		}
+		if data[i] == '"' {
+			inString = true
+		}
+		result = append(result, data[i])
+		i++
+	}
+	return result
+}
+
+// loadConfig loads configuration from a JSON file, stripping comments first.
 func loadConfig(path string) (*Config, error) {
-	file, err := os.Open(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+
+	cleanedData := stripComments(data)
 
 	var cfg Config
-	dec := json.NewDecoder(file)
-	if err := dec.Decode(&cfg); err != nil {
+	if err := json.Unmarshal(cleanedData, &cfg); err != nil {
 		return nil, err
 	}
 	return &cfg, nil
@@ -89,6 +156,16 @@ func readRegistryConfig() (*Config, error) {
 	return cfg, nil
 }
 
+// cleanAndNormalizePaths converts both backslashes and forward slashes to target OS separators,
+// and removes any trailing slashes or redundant directory items.
+func cleanAndNormalizePaths(paths []string) []string {
+	normalized := make([]string, len(paths))
+	for i, p := range paths {
+		normalized[i] = filepath.Clean(filepath.FromSlash(strings.TrimSpace(p)))
+	}
+	return normalized
+}
+
 // GetSourcePaths resolves which source paths and destination paths to use.
 // It returns (paths, dstConfig, modeName, sourceUsed, err).
 func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
@@ -102,10 +179,7 @@ func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
 	// 1. If explicit sources are given via CLI
 	if args.Source != "" {
 		paths := strings.Split(args.Source, ",")
-		for i, p := range paths {
-			paths[i] = strings.TrimSpace(p)
-		}
-		return paths, emptyDst, mode, "CLI Flag", nil
+		return cleanAndNormalizePaths(paths), emptyDst, mode, "CLI Flag", nil
 	}
 
 	// Helper to extract the right paths from Config
@@ -116,12 +190,23 @@ func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
 		return cfg.Dp.Paths.Src.Debug
 	}
 
+	// Helper to normalize the custom destinations if specified in config
+	normalizeDst := func(dst DstConfig) DstConfig {
+		if dst.Win32 != "" {
+			dst.Win32 = filepath.Clean(filepath.FromSlash(dst.Win32))
+		}
+		if dst.X64 != "" {
+			dst.X64 = filepath.Clean(filepath.FromSlash(dst.X64))
+		}
+		return dst
+	}
+
 	// 2. Try loading config from specified config path (or default "config.json")
 	cfg, err := loadConfig(args.ConfigPath)
 	if err == nil {
 		paths := getPathsFromConfig(cfg)
 		if len(paths) > 0 {
-			return paths, cfg.Dp.Paths.Dst, mode, fmt.Sprintf("Config File (%s)", args.ConfigPath), nil
+			return cleanAndNormalizePaths(paths), normalizeDst(cfg.Dp.Paths.Dst), mode, fmt.Sprintf("Config File (%s)", args.ConfigPath), nil
 		}
 	}
 
@@ -134,7 +219,7 @@ func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
 				if cfg, err := loadConfig(altConfigPath); err == nil {
 					paths := getPathsFromConfig(cfg)
 					if len(paths) > 0 {
-						return paths, cfg.Dp.Paths.Dst, mode, fmt.Sprintf("Config File (%s)", altConfigPath), nil
+						return cleanAndNormalizePaths(paths), normalizeDst(cfg.Dp.Paths.Dst), mode, fmt.Sprintf("Config File (%s)", altConfigPath), nil
 					}
 				}
 			}
@@ -146,7 +231,7 @@ func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
 	if err == nil {
 		paths := getPathsFromConfig(regCfg)
 		if len(paths) > 0 {
-			return paths, regCfg.Dp.Paths.Dst, mode, "Windows Registry", nil
+			return cleanAndNormalizePaths(paths), normalizeDst(regCfg.Dp.Paths.Dst), mode, "Windows Registry", nil
 		}
 	}
 

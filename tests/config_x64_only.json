@@ -1,17 +1,18 @@
 {
+  // 64-bit ONLY copy configuration
   "dp": {
     "paths": {
       "src": {
         "debug": [
-          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.x64"
+          "C:/y/c/dp/pm-native/src/~Output/Debug.x64/"
         ],
         "release": [
           "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64"
         ]
       },
       "dst": {
-        "win32": "",
-        "x64": "C:\\Program Files\\DigitalPersona\\Bin"
+        "win32": "", // Win32 files are ignored in this run
+        "x64": "C:/Program Files/DigitalPersona/Bin"
       }
     }
   }
