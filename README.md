@@ -9,6 +9,12 @@ This utility is a direct conversion of the original C# WinForms application `Cop
 ## Table of Contents
 
 - [Key Features](#key-features)
+- [Configuration File Format & Structure](#configuration-file-format--structure)
+  - [Flexible Path Syntax (Slashes & Normalization)](#flexible-path-syntax-slashes--normalization)
+  - [Comments Support](#comments-support)
+  - [Structure Breakdown](#structure-breakdown)
+  - [JSON Schema Template (with comments & mixed slashes example)](#json-schema-template-with-comments--mixed-slashes-example)
+- [Example Configurations (tests/ directory)](#example-configurations-tests-directory)
 - [Folder Structure](#folder-structure)
 - [How to Build and Run (Using NPM/Node scripts)](#how-to-build-and-run-using-npm-node-scripts)
   - [Using NPM Scripts](#using-npm-scripts)
@@ -18,12 +24,6 @@ This utility is a direct conversion of the original C# WinForms application `Cop
   - [Examples](#examples)
 - [Detailed Configuration & Target Mode Clarification](#detailed-configuration--target-mode-clarification)
   - [Important: Target Modes vs. Utility Compilation](#important-target-modes-vs-utility-compilation)
-- [Configuration File Format & Structure](#configuration-file-format--structure)
-  - [Flexible Path Syntax (Slashes & Normalization)](#flexible-path-syntax-slashes--normalization)
-  - [Comments Support](#comments-support)
-  - [Structure Breakdown](#structure-breakdown)
-  - [JSON Schema Template (with comments & mixed slashes example)](#json-schema-template-with-comments--mixed-slashes-example)
-- [Example Configurations (tests/ directory)](#example-configurations-tests-directory)
 
 ---
 
@@ -46,115 +46,6 @@ This utility is a direct conversion of the original C# WinForms application `Cop
 
 5. **Administrator Privilege Warning**:
    - Since copying to `C:/Program Files` or `C:/Program Files (x86)` requires elevated privileges on Windows, the tool checks for administrator rights on startup and outputs a user-friendly warning if it's run as a standard user.
-
----
-
-## Folder Structure
-
-- `src/`: Directory containing all Go source files.
-  - `main.go`: Entry point and program orchestration.
-  - `config.go`: Argument parsing, JSON configuration, and Windows Registry integration.
-  - `help.go`: Modular help output displaying usage, default options, and behaviors.
-  - `process.go`: Graceful Win32 process search and close logic for `DPAgent.exe`.
-  - `copy.go`: Core copy loop, timestamp comparison, and locked file renaming.
-  - `copy_test.go`: Unit tests for file utility behaviors.
-- `scripts/`: Development and utility scripts.
-  - `build.js`: Auto-incrementing version builder that compiles the Go binary.
-- `tests/`: Directory containing various preconfigured examples of JSON configuration files.
-- `config.json`: Sample configuration file template.
-- `package.json`: NPM package manifest for unified scripts (run, test, build).
-- `.gitignore`: Configured to ignore Go/Node/Windows artifacts and generated binaries.
-
----
-
-## How to Build and Run (Using NPM/Node scripts)
-
-You can run the project using standard `npm` commands or the direct `go` commands below.
-
-### Using NPM Scripts
-
-- **Run in Debug Mode (Default):**
-  ```bash
-  npm start
-  ```
-- **Run in Release Mode:**
-  ```bash
-  npm run start:release
-  ```
-- **Build the executable:**
-  ```bash
-  npm run build
-  ```
-  This creates the compiled binary in `bin/copy-pm-files.exe`.
-- **Run unit tests:**
-  ```bash
-  npm test
-  ```
-
----
-
-## How to Build (Using Native Go Commands)
-
-First, make sure you have Go installed on your machine.
-
-1. Install dependencies (specifically the Windows system bindings package):
-   ```bash
-   go get golang.org/x/sys/windows
-   ```
-
-2. Compile the binary:
-   ```bash
-   go build -o copy-pm-files.exe
-   ```
-
----
-
-## How to Run
-
-### Command-Line Arguments
-
-- `-release`: Run the utility targeting **Release** compiled files. By default, the utility operates on **Debug** compiled files.
-- `-config <path>`: Path to a JSON configuration file (defaults to `config.json`).
-- `-source <paths>`: Comma-separated list of paths (e.g. `-source "C:/src/Win32,C:/src/x64"`), bypassing any registry or config file settings.
-  - **Handling Spaces**: If any paths contain spaces, you **must enclose the entire comma-separated list of paths in double quotes**. For example:
-    `.\copy-pm-files.exe -source "C:/Folder With Spaces/Win32,C:/Other Folder/x64"`
-  - **Handling Commas**: If a directory or file name contains a literal comma (`,`), you **must escape the comma with a backslash (`\,`)** inside the list. For example:
-    `.\copy-pm-files.exe -source "C:/Folder\, With Comma/Win32,C:/NormalFolder/x64"`
-- `-set <name>`: Optional. Designate a specific configuration set from `config.json` to execute (and only this one)—regardless of whether its `isActive` attribute is set to `true` or `false`.
-- `-force`: Optional. Force copy all files regardless of timestamps ("copy if newer" is the default).
-
-### Examples
-
-**1. Standard Run (Debug, uses registry fallback or local `config.json`):**
-```bash
-# Run with administrator privileges
-.\copy-pm-files.exe
-```
-
-**2. Run in Release Mode:**
-```bash
-.\copy-pm-files.exe -release
-```
-
-**3. Run with Custom Paths directly (bypassing configs):**
-```bash
-.\copy-pm-files.exe -source "C:/MySources/Debug.Win32,C:/MySources/Debug.x64"
-```
-
-**4. Run with a Custom Configuration File:**
-```bash
-.\copy-pm-files.exe -config C:/Users/Public/my_custom_config.json
-```
-
----
-
-## Detailed Configuration & Target Mode Clarification
-
-### Important: Target Modes vs. Utility Compilation
-It is crucial to clarify that the **Debug** and **Release** target modes **do not describe how this utility itself is compiled**, nor does running with `-release` change the performance characteristics of this Go tool. Rather:
-* **The mode dictates which sets of your project's compiled binary files are being targeted for copying.**
-* When running in **Debug mode** (default), the utility reads the paths where your C++/C# compiler outputs the **Debug target builds** (typically ending with `Debug.Win32` and `Debug.x64`).
-* When running in **Release mode** (using `-release`), the utility targets the paths where your compiler outputs the **Release target builds** (typically ending with `Release.Win32` and `Release.x64`).
 
 ---
 
@@ -282,3 +173,112 @@ You can try using any of these by passing the `-config` flag:
 # Run using the custom drive configuration example
 npm start -- -config tests/config_custom_drive_paths.json
 ```
+
+---
+
+## Folder Structure
+
+- `src/`: Directory containing all Go source files.
+  - `main.go`: Entry point and program orchestration.
+  - `config.go`: Argument parsing, JSON configuration, and Windows Registry integration.
+  - `help.go`: Modular help output displaying usage, default options, and behaviors.
+  - `process.go`: Graceful Win32 process search and close logic for `DPAgent.exe`.
+  - `copy.go`: Core copy loop, timestamp comparison, and locked file renaming.
+  - `copy_test.go`: Unit tests for file utility behaviors.
+- `scripts/`: Development and utility scripts.
+  - `build.js`: Auto-incrementing version builder that compiles the Go binary.
+- `tests/`: Directory containing various preconfigured examples of JSON configuration files.
+- `config.json`: Sample configuration file template.
+- `package.json`: NPM package manifest for unified scripts (run, test, build).
+- `.gitignore`: Configured to ignore Go/Node/Windows artifacts and generated binaries.
+
+---
+
+## How to Build and Run (Using NPM/Node scripts)
+
+You can run the project using standard `npm` commands or the direct `go` commands below.
+
+### Using NPM Scripts
+
+- **Run in Debug Mode (Default):**
+  ```bash
+  npm start
+  ```
+- **Run in Release Mode:**
+  ```bash
+  npm run start:release
+  ```
+- **Build the executable:**
+  ```bash
+  npm run build
+  ```
+  This creates the compiled binary in `bin/copy-pm-files.exe`.
+- **Run unit tests:**
+  ```bash
+  npm test
+  ```
+
+---
+
+## How to Build (Using Native Go Commands)
+
+First, make sure you have Go installed on your machine.
+
+1. Install dependencies (specifically the Windows system bindings package):
+   ```bash
+   go get golang.org/x/sys/windows
+   ```
+
+2. Compile the binary:
+   ```bash
+   go build -o copy-pm-files.exe
+   ```
+
+---
+
+## How to Run
+
+### Command-Line Arguments
+
+- `-release`: Run the utility targeting **Release** compiled files. By default, the utility operates on **Debug** compiled files.
+- `-config <path>`: Path to a JSON configuration file (defaults to `config.json`).
+- `-source <paths>`: Comma-separated list of paths (e.g. `-source "C:/src/Win32,C:/src/x64"`), bypassing any registry or config file settings.
+  - **Handling Spaces**: If any paths contain spaces, you **must enclose the entire comma-separated list of paths in double quotes**. For example:
+    `.\copy-pm-files.exe -source "C:/Folder With Spaces/Win32,C:/Other Folder/x64"`
+  - **Handling Commas**: If a directory or file name contains a literal comma (`,`), you **must escape the comma with a backslash (`\,`)** inside the list. For example:
+    `.\copy-pm-files.exe -source "C:/Folder\, With Comma/Win32,C:/NormalFolder/x64"`
+- `-set <name>`: Optional. Designate a specific configuration set from `config.json` to execute (and only this one)—regardless of whether its `isActive` attribute is set to `true` or `false`.
+- `-force`: Optional. Force copy all files regardless of timestamps ("copy if newer" is the default).
+
+### Examples
+
+**1. Standard Run (Debug, uses registry fallback or local `config.json`):**
+```bash
+# Run with administrator privileges
+.\copy-pm-files.exe
+```
+
+**2. Run in Release Mode:**
+```bash
+.\copy-pm-files.exe -release
+```
+
+**3. Run with Custom Paths directly (bypassing configs):**
+```bash
+.\copy-pm-files.exe -source "C:/MySources/Debug.Win32,C:/MySources/Debug.x64"
+```
+
+**4. Run with a Custom Configuration File:**
+```bash
+.\copy-pm-files.exe -config C:/Users/Public/my_custom_config.json
+```
+
+---
+
+## Detailed Configuration & Target Mode Clarification
+
+### Important: Target Modes vs. Utility Compilation
+It is crucial to clarify that the **Debug** and **Release** target modes **do not describe how this utility itself is compiled**, nor does running with `-release` change the performance characteristics of this Go tool. Rather:
+* **The mode dictates which sets of your project's compiled binary files are being targeted for copying.**
+* When running in **Debug mode** (default), the utility reads the paths where your C++/C# compiler outputs the **Debug target builds** (typically ending with `Debug.Win32` and `Debug.x64`).
+* When running in **Release mode** (using `-release`), the utility targets the paths where your compiler outputs the **Release target builds** (typically ending with `Release.Win32` and `Release.x64`).
