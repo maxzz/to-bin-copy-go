@@ -16,11 +16,13 @@ This utility is a direct conversion of the original C# WinForms application `Cop
   - [JSON Schema Template (with comments & mixed slashes example)](#json-schema-template-with-comments--mixed-slashes-example)
 - [Detailed Configuration & Target Mode Clarification](#detailed-configuration--target-mode-clarification)
   - [Important: Target Modes vs. Utility Compilation](#important-target-modes-vs-utility-compilation)
+  - [Windows Registry Configuration & Fallback Format](#windows-registry-configuration--fallback-format)
 - [How to Run](#how-to-run)
   - [Command-Line Arguments](#command-line-arguments)
   - [Examples](#examples)
   - [Example Configurations](#example-configurations-tests-directory)
 - [Folder Structure](#folder-structure)
+- [How It Works](#how-it-works)
 - [How to Build and Run (Using NPM/Node scripts)](#how-to-build-and-run-using-npm-node-scripts)
   - [Using NPM Scripts](#using-npm-scripts)
 - [How to Build (Using Native Go Commands)](#how-to-build-using-native-go-commands)
@@ -166,6 +168,40 @@ It is crucial to clarify that the **Debug** and **Release** target modes **do no
 * When running in **Debug mode** (default), the utility reads the paths where your C++/C# compiler outputs the **Debug target builds** (typically ending with `Debug.Win32` and `Debug.x64`).
 * When running in **Release mode** (using `-release`), the utility targets the paths where your compiler outputs the **Release target builds** (typically ending with `Release.Win32` and `Release.x64`).
 
+### Windows Registry Configuration & Fallback Format
+
+If no command-line source directories are specified via `-source`, and no local `config.json` is found (or its paths list is empty), the utility automatically falls back to reading configuration from the Windows Registry.
+
+The utility reads from the following registry path:
+* **Registry Key**: `HKEY_CURRENT_USER\SOFTWARE\AATanam\CopyPmFilesToBin`
+
+Within this key, the utility looks for two specific values depending on the target mode:
+
+1. **`sourcePathsDebug`** (Multi-String / `REG_MULTI_SZ`):
+   - Used when running in **Debug mode** (the default mode, without `-release`).
+   - Contains a list of source folders containing the Debug compiled native binaries and driver files.
+   - Example folders: `C:\MyProject\src\~Output\Debug.Win32`, `C:\MyProject\src\~Output\Debug.x64`.
+
+2. **`sourcePathsRelease`** (Multi-String / `REG_MULTI_SZ`):
+   - Used when running in **Release mode** (using `-release`).
+   - Contains a list of source folders containing the Release compiled native binaries and driver files.
+   - Example folders: `C:\MyProject\src\~Output\Release.Win32`, `C:\MyProject\src\~Output\Release.x64`.
+
+#### Accepted Registry Data & Behavior
+
+* **Value Type**: Must be a **Multi-String Value** (`REG_MULTI_SZ`). In Windows Registry Editor (`regedit.exe`), you can create this by right-clicking on the `CopyPmFilesToBin` key, selecting **New** -> **Multi-String Value**, and naming it either `sourcePathsDebug` or `sourcePathsRelease`.
+* **Value Data**: Each line in the Multi-String value represents one source directory path.
+* **Architecture Suffix Detection**: Each directory path defined in these multi-string values must end with either `Win32` or `x64` (case-insensitive, e.g., `C:\Output\Debug.Win32` or `C:\Output\Debug.x64`).
+  - **Win32 source directories**: Target files are copied to the standard 32-bit (x86) DigitalPersona installation folder: `%ProgramFiles(x86)%\DigitalPersona\Bin` (typically `C:\Program Files (x86)\DigitalPersona\Bin`).
+  - **x64 source directories**: Target files are copied to the standard 64-bit DigitalPersona installation folder: `%ProgramFiles%\DigitalPersona\Bin` (typically `C:\Program Files\DigitalPersona\Bin`).
+* **Path Slashes & Normalization**: The registry paths support both forward slashes (`/`) and backslashes (`\`). They are automatically cleaned and normalized at runtime:
+  - Trailing slashes are stripped.
+  - Windows-style backslashes are resolved properly.
+  - Spaces in paths are fully supported without needing quotes inside the registry value editor.
+* **Predefined File Lists**: Since the registry fallback processes standard DigitalPersona copying (equivalent to setting `"dp": true` in a JSON config), it copies the predefined set of files matching the architecture of the source folder:
+  - **Win32 Predefined Files**: `DpAgent.exe`, `DpFbView.dll`, `DpOFeedb.dll`, `DpoPS.dll`, `DpoSet.dll`, `DPPMAdminConsole.exe`, `DpoSetA.dll`, `DpoTrain.dll`, `DpoTrainMgr.dll`, `DpStgCat.dll`
+  - **x64 Predefined Files**: `DpAgentOtsPlugin.dll`, `DpAgentOtsPlugin.WebSdk.dll`, `DpFbView.dll`, `DpImporter.dll`, `DpMiniDS.dll`, `DpOCache.dll`, `DpOFeedb.dll`, `DpOnlineIDs.dll`, `DpoPS.dll`, `DpoSet.dll`, `DpOtsMsg.dll`, `DpUtt.dll`, `DsDashboard.dll`
+
 ---
 
 ## How to Run
@@ -235,6 +271,106 @@ npm start -- -config tests/config_custom_drive_paths.json
 - `config.json`: Sample configuration file template.
 - `package.json`: NPM package manifest for unified scripts (run, test, build).
 - `.gitignore`: Configured to ignore Go/Node/Windows artifacts and generated binaries.
+
+---
+
+## How It Works
+
+This utility orchestrates a structured, multi-step pipeline to safely and efficiently copy binary files into protected system directories on Windows. Below is an overview of the key phases and a visual execution flow diagram.
+
+### Key Phases of Execution
+
+1. **Initialization & CLI Parsing**: 
+   - Activates ANSI virtual terminal sequence processing to support colored console logs in Windows.
+   - Parses the command-line flags (`-release`, `-config`, `-source`, `-set`, and `-force`).
+   - Checks if running with Administrator privileges and outputs a standard user warning if copying might require elevation.
+
+2. **Hierarchical Configuration Resolution**:
+   - **Step A**: Checks if `-source` was specified. If yes, it bypasses files and registry entirely.
+   - **Step B**: Otherwise, it tries to read the specified configuration JSON (defaulting to `config.json` next to the working directory or the executable). Comment lines (`//` and `/* ... */`) are dynamically stripped before parsing.
+   - **Step C**: If JSON loading fails or the paths list is empty, it queries the Windows Registry key `HKEY_CURRENT_USER\SOFTWARE\AATanam\CopyPmFilesToBin` (reading either `sourcePathsDebug` or `sourcePathsRelease` multi-string values).
+   - **Step D**: If all resolution paths yield no folders, the process exits with a helpful error.
+
+3. **Target Mode & Path Normalization**:
+   - Normalizes all forward/backward slashes and strips trailing slashes to prevent join errors.
+   - Categorizes each source path as `Win32` or `x64` based on suffix detection (e.g., `Debug.Win32`).
+
+4. **Graceful Service Termination**:
+   - Before attempting to overwrite any binaries, the utility uses the Win32 API (`FindWindowW` and `PostMessageW`) to safely post a `WM_CLOSE` message to the `DPAgent.exe` application window.
+   - It waits up to 10 seconds for the service process to exit peacefully, preventing file lock conflicts.
+
+5. **Smart Timestamp Comparison & Force Flag**:
+   - For each target file, the tool compares the source and destination files' "Last Modified" times in UTC.
+   - Files are skipped if the source is not strictly newer, avoiding redundant write operations. This check can be bypassed entirely using the `-force` command-line flag.
+
+6. **Locked File Renaming (Conflict Resolution)**:
+   - If a target DLL or binary is actively locked by another process (e.g., a background service, explorer, or browser extension), a Sharing Violation error (`0x80070020`) occurs.
+   - The tool handles this by automatically renaming the locked target file in the destination folder to a backup name (e.g., `DpFbView.dll` is renamed to `DpFbView_1.dll`, then `DpFbView_2.dll`, etc.) and retrying the copy.
+
+7. **Copy Execution Modes**:
+   - **Predefined Files List**: Used when `"dp": true` (default/registry). Copies a strict predefined list of native files belonging to DigitalPersona.
+   - **Custom Sourced (Wildcard Matching)**: Used when `"dp": false`. Performs a directory walk over the source folder, applying custom regular expressions (`srcFilesInclude` / `srcFilesExclude`) to filter which files to copy.
+   - **Individual Files list**: Copies designated source-to-destination file pairs explicitly.
+
+### Execution Flow Diagram
+
+```mermaid
+flowchart TD
+    Start([Start copy-pm-files.exe]) --> InitConsole[Initialize ANSI Colors]
+    InitConsole --> ParseArgs[Parse CLI Arguments]
+    ParseArgs --> ResolveConfig{Resolve Config & Items}
+    
+    %% Configuration Resolution
+    ResolveConfig -- "'-source' Specified" --> CLIOverride[Use Comma-Separated CLI Sources]
+    ResolveConfig -- "No '-source'" --> TryLoadJSON[Load JSON Config File]
+    TryLoadJSON -- JSON Success & Not Empty --> ApplyJSON[Use Config Items from JSON]
+    TryLoadJSON -- JSON Fails or Empty --> TryRegistry[Read Windows Registry <br> HKEY_CURRENT_USER\\SOFTWARE\\AATanam\\CopyPmFilesToBin]
+    TryRegistry -- Registry Success & Not Empty --> ApplyRegistry[Use Registry Paths as Config Items]
+    TryRegistry -- Registry Fails or Empty --> ShowError[Print Error & Exit]
+    
+    CLIOverride --> InitForce
+    ApplyJSON --> InitForce
+    ApplyRegistry --> InitForce
+    
+    InitForce[Initialize Force Flag & Print Startup Info] --> CheckElevation[Check Administrator Privileges & Warn if Standard User]
+    CheckElevation --> ExecItems[Loop through Config Items]
+    
+    %% Execution Loop
+    ExecItems --> IdentifyArch[Identify Architecture Suffix <br> 'Win32' or 'x64']
+    IdentifyArch --> CheckDpAgent{Is DPAgent.exe Running?}
+    CheckDpAgent -- Yes --> StopDpAgent[Gracefully Close DPAgent.exe <br> FindWindow/PostMessage/WaitForSingleObject]
+    CheckDpAgent -- No --> ResolveDst[Resolve Destination Directory <br> Custom or System Default Paths]
+    StopDpAgent --> ResolveDst
+    
+    ResolveDst --> ProcessFiles{Process File Actions}
+    
+    %% File Actions processing
+    ProcessFiles -- Standard DP List --> PredefinedList[Copy Predefined Architecture Files]
+    ProcessFiles -- Custom Sourced --> RegexMatch[Walk Dir & Filter by Include/Exclude Regex]
+    ProcessFiles -- Individual Files --> DirectCopy[Copy Specified File List]
+    
+    PredefinedList --> CopyLoop[For Each File: Check Timestamp]
+    RegexMatch --> CopyLoop
+    DirectCopy --> CopyLoop
+    
+    %% Timestamp & Copy Logic
+    CopyLoop --> CheckTimestamp{Is Source Newer or -force Set?}
+    CheckTimestamp -- No --> SkipFile[Skip Copying]
+    CheckTimestamp -- Yes --> TryCopy[Try Copying File]
+    
+    TryCopy --> CheckLocked{Is File Locked / Sharing Violation?}
+    CheckLocked -- Yes --> RenameLocked[Rename Locked File <br> e.g. DpFbView.dll -> DpFbView_1.dll]
+    RenameLocked --> TryCopy
+    CheckLocked -- No/Success --> NextFile[File Copied Successfully]
+    
+    SkipFile --> NextFile
+    NextFile --> MoreFiles{More Files?}
+    MoreFiles -- Yes --> CopyLoop
+    MoreFiles -- No --> MoreItems{More Config Items?}
+    
+    MoreItems -- Yes --> ExecItems
+    MoreItems -- No --> Finish([Print Process Complete & Exit])
+```
 
 ---
 
