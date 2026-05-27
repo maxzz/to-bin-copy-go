@@ -6,6 +6,27 @@ This utility is a direct conversion of the original C# WinForms application `Cop
 
 ---
 
+## Table of Contents
+
+- [Key Features](#key-features)
+- [Folder Structure](#folder-structure)
+- [How to Build and Run (Using NPM/Node scripts)](#how-to-build-and-run-using-npm-node-scripts)
+  - [Using NPM Scripts](#using-npm-scripts)
+- [How to Build (Using Native Go Commands)](#how-to-build-using-native-go-commands)
+- [How to Run](#how-to-run)
+  - [Command-Line Arguments](#command-line-arguments)
+  - [Examples](#examples)
+- [Detailed Configuration & Target Mode Clarification](#detailed-configuration--target-mode-clarification)
+  - [Important: Target Modes vs. Utility Compilation](#important-target-modes-vs-utility-compilation)
+- [Configuration File Format & Structure](#configuration-file-format--structure)
+  - [Flexible Path Syntax (Slashes & Normalization)](#flexible-path-syntax-slashes--normalization)
+  - [Comments Support](#comments-support)
+  - [Structure Breakdown](#structure-breakdown)
+  - [JSON Schema Template (with comments & mixed slashes example)](#json-schema-template-with-comments--mixed-slashes-example)
+- [Example Configurations (tests/ directory)](#example-configurations-tests-directory)
+
+---
+
 ## Key Features
 
 1. **Flexible Configuration Resolution (Hierarchical Fallback)**:
