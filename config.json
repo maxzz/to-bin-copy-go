@@ -6,24 +6,29 @@
      - Block comments starting with /* ... * /
      - Forward slashes in directory paths (trailing slashes are stripped automatically)
   */
-  "dp": {
-    "paths": {
-      "src": {
-        // Source directories where the built files reside
-        "debug": [
-          "C:/y/c/dp/pm-native/src/~Output/Debug.Win32/",
-          "C:/y/c/dp/pm-native/src/~Output/Debug.x64"
-        ],
-        "release": [
-          "C:/y/c/dp/pm-native/src/~Output/Release.Win32",
-          "C:/y/c/dp/pm-native/src/~Output/Release.x64/"
-        ]
-      },
-      "dst": {
-        // Leave empty to use system default paths, or specify target destinations
-        "win32": "",
-        "x64": ""
+  "items": [
+    {
+      "name": "dp-binaries",
+      "isActive": true,
+      "paths": {
+        "dp": true,
+        "src": {
+          // Source directories where the built files reside
+          "debug": [
+            "C:/y/c/dp/pm-native/src/~Output/Debug.Win32/",
+            "C:/y/c/dp/pm-native/src/~Output/Debug.x64"
+          ],
+          "release": [
+            "C:/y/c/dp/pm-native/src/~Output/Release.Win32",
+            "C:/y/c/dp/pm-native/src/~Output/Release.x64/"
+          ]
+        },
+        "dst": {
+          // Leave empty to use system default paths, or specify target destinations
+          "win32": "",
+          "x64": ""
+        }
       }
     }
-  }
+  ]
 }
