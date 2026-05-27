@@ -172,15 +172,13 @@ It is crucial to clarify that the **Debug** and **Release** target modes **do no
 
 ### Command-Line Arguments
 
-- `-release`: Run the utility targeting **Release** compiled files. By default, the utility operates on **Debug** compiled files.
-- `-config <path>`: Path to a JSON configuration file (defaults to `config.json`).
-- `-source <paths>`: Comma-separated list of paths (e.g. `-source "C:/src/Win32,C:/src/x64"`), bypassing any registry or config file settings.
-  - **Handling Spaces**: If any paths contain spaces, you **must enclose the entire comma-separated list of paths in double quotes**. For example:
-    `.\copy-pm-files.exe -source "C:/Folder With Spaces/Win32,C:/Other Folder/x64"`
-  - **Handling Commas**: If a directory or file name contains a literal comma (`,`), you **must escape the comma with a backslash (`\,`)** inside the list. For example:
-    `.\copy-pm-files.exe -source "C:/Folder\, With Comma/Win32,C:/NormalFolder/x64"`
-- `-set <name>`: Optional. Designate a specific configuration set from `config.json` to execute (and only this one)—regardless of whether its `isActive` attribute is set to `true` or `false`.
-- `-force`: Optional. Force copy all files regardless of timestamps ("copy if newer" is the default).
+| Flag / Option | Description | Default Value & Usage Notes |
+| :--- | :--- | :--- |
+| `-release` | Targets **Release** compiled files instead of Debug compiled files. | `false` (by default, targets Debug compiled files). |
+| `-config <path>` | Specifies the path to the custom JSON configuration file. | `"config.json"` (searches in the current working directory, falling back next to the executable). |
+| `-source <paths>` | Comma-separated list of custom source directories to copy files from. Bypasses configuration files and Windows Registry fallbacks completely. | Unspecified.<br>- **Spaces**: Enclose the list in double quotes, e.g. `-source "C:/Folder With Spaces/Win32,C:/Other Folder/x64"`. <br>- **Commas**: Escape literal commas with a backslash, e.g. `\,`. |
+| `-set <name>` | Designates a specific configuration set inside `config.json` to execute (and only this one). | Unspecified (by default, processes all sets where `isActive` is `true`). Executes the matching set regardless of its `isActive` flag status. |
+| `-force` | Force copy all matched files, bypassing the default timestamp comparison checks. | `false` (by default, copies only if the source file is strictly newer than the destination). |
 
 ### Examples
 
