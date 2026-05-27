@@ -24,6 +24,9 @@ func PrintHelp() {
 	fmt.Println()
 	fmt.Println("  " + ColorCyan + "-source" + ColorReset + " <paths>")
 	fmt.Println("        Comma-separated list of custom source directories to copy files from.")
+	fmt.Println("        [Note]: If any paths contain spaces, you MUST enclose the entire")
+	fmt.Println("        comma-separated list in double quotes, for example:")
+	fmt.Println("          -source \"C:/Folder With Spaces/Win32,C:/Other Folder/x64\"")
 	fmt.Println("        Specifying this option bypasses both the configuration file and Windows Registry.")
 	fmt.Println("        [Default]: Unspecified (resolves sources from configuration file or registry fallback).")
 	fmt.Println()
@@ -51,5 +54,6 @@ func PrintHelp() {
 	fmt.Println("     - Before copying, the tool automatically searches for running 'DPAgent.exe' processes.")
 	fmt.Println("     - It gracefully posts a WM_CLOSE message to its window and waits up to 10 seconds for it to close.")
 	fmt.Println("     - If DPAgent is not running, or exits successfully, copying begins immediately." + ColorReset)
+	fmt.Println()
 	fmt.Println(ColorCyan + "==========================================================" + ColorReset)
 }

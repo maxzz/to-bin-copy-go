@@ -93,6 +93,8 @@ First, make sure you have Go installed on your machine.
 - `-release`: Run the utility targeting **Release** compiled files (looks for paths specified in the `sourcePathsRelease` array instead of `sourcePathsDebug`). By default, the utility operates on **Debug** compiled files.
 - `-config <path>`: Path to a JSON configuration file (defaults to `config.json`).
 - `-source <paths>`: Comma-separated list of paths (e.g. `-source "C:/src/Win32,C:/src/x64"`), bypassing any registry or config file settings.
+  - **Handling Spaces**: If any paths contain spaces, you **must enclose the entire comma-separated list of paths in double quotes**. For example:
+    `.\copy-pm-files.exe -source "C:/Folder With Spaces/Win32,C:/Other Folder/x64"`
 
 ### Examples
 
