@@ -16,8 +16,8 @@ func main() {
 	// Parse CLI arguments
 	args := parseArgs()
 
-	// Get resolved source paths
-	paths, mode, sourceUsed, err := GetSourcePaths(args)
+	// Get resolved source paths and destination configurations
+	paths, dstCfg, mode, sourceUsed, err := GetSourcePaths(args)
 	if err != nil {
 		fmt.Printf("Error: %v\n\n", err)
 		fmt.Println("Usage of copy-pm-files-to-bin:")
@@ -41,6 +41,15 @@ func main() {
 	for _, p := range paths {
 		fmt.Printf("  - %s\n", p)
 	}
+	if dstCfg.Win32 != "" || dstCfg.X64 != "" {
+		fmt.Println("Custom Destination Paths:")
+		if dstCfg.Win32 != "" {
+			fmt.Printf("  - Win32: %s\n", dstCfg.Win32)
+		}
+		if dstCfg.X64 != "" {
+			fmt.Printf("  - x64:   %s\n", dstCfg.X64)
+		}
+	}
 	fmt.Println("==================================================")
 
 	// Check for Administrator elevation on Windows
@@ -53,7 +62,7 @@ func main() {
 	}
 
 	// Execute copy process
-	CopyPmFilesToBin(paths)
+	CopyPmFilesToBin(paths, dstCfg)
 
 	fmt.Println("\nProcess complete.")
 }

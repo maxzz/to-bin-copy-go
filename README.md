@@ -134,27 +134,39 @@ If you prefer using a `config.json` file rather than command-line arguments or t
 
 ### Structure Breakdown
 
-The configuration file is written in standard JSON format containing two major string array properties:
+The configuration file is written in standard JSON format. It begins with a top-level key named `"dp"`, which groups all predefined properties. Inside `"dp"`, there is a `"paths"` section that contains `"src"` and `"dst"` fields specifying the source and destination paths:
 
-1. **`sourcePathsDebug` (Array of Strings)**: 
-   - Defines one or more absolute source directories where the **Debug build** output files are placed. 
-   - The directory names **must** end with either `Win32` or `x64` (case-insensitive) so that the utility knows which architecture target files to copy and where they should be sent.
-2. **`sourcePathsRelease` (Array of Strings)**: 
-   - Defines one or more absolute source directories where the **Release build** output files are placed. 
-   - Similarly, directory names in this list **must** end with either `Win32` or `x64` (case-insensitive).
+1. **`src` (Object)**:
+   - **`debug` (Array of Strings)**: Defines one or more absolute source directories where the **Debug build** output files are placed.
+   - **`release` (Array of Strings)**: Defines one or more absolute source directories where the **Release build** output files are placed.
+   - *Note: Source directory paths in both arrays must end with either `Win32` or `x64` (case-insensitive) so that the utility knows which architecture target files to copy.*
+
+2. **`dst` (Object)**:
+   - **`win32` (String)**: Specifies a custom destination folder for Win32 files. If left empty (`""`), it automatically falls back to the default system installation path: `C:\Program Files (x86)\DigitalPersona\Bin`.
+   - **`x64` (String)**: Specifies a custom destination folder for x64 files. If left empty (`""`), it automatically falls back to the default system installation path: `C:\Program Files\DigitalPersona\Bin`.
 
 ### JSON Schema Template
 
 ```json
 {
-  "sourcePathsDebug": [
-    "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.Win32",
-    "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.x64"
-  ],
-  "sourcePathsRelease": [
-    "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.Win32",
-    "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64"
-  ]
+  "dp": {
+    "paths": {
+      "src": {
+        "debug": [
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.Win32",
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.x64"
+        ],
+        "release": [
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.Win32",
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64"
+        ]
+      },
+      "dst": {
+        "win32": "",
+        "x64": ""
+      }
+    }
+  }
 }
 ```
 

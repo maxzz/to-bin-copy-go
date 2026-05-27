@@ -1,10 +1,20 @@
 {
-  "sourcePathsDebug": [
-    "D:\\BuildServer\\Artifacts\\Project_Win32",
-    "D:\\BuildServer\\Artifacts\\Project_x64"
-  ],
-  "sourcePathsRelease": [
-    "D:\\BuildServer\\Artifacts\\Release\\Project_Win32",
-    "D:\\BuildServer\\Artifacts\\Release\\Project_x64"
-  ]
+  "dp": {
+    "paths": {
+      "src": {
+        "debug": [
+          "D:\\BuildServer\\Artifacts\\Project_Win32",
+          "D:\\BuildServer\\Artifacts\\Project_x64"
+        ],
+        "release": [
+          "D:\\BuildServer\\Artifacts\\Release\\Project_Win32",
+          "D:\\BuildServer\\Artifacts\\Release\\Project_x64"
+        ]
+      },
+      "dst": {
+        "win32": "D:\\TargetDestination\\Win32",
+        "x64": "D:\\TargetDestination\\x64"
+      }
+    }
+  }
 }

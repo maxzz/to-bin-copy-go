@@ -41,8 +41,8 @@ var x64Files = []string{
 	"DsDashboard.dll",
 }
 
-// CopyPmFilesToBin executes the copy operations from source paths to the target system folders.
-func CopyPmFilesToBin(sourcePaths []string) {
+// CopyPmFilesToBin executes the copy operations from source paths to the target folders.
+func CopyPmFilesToBin(sourcePaths []string, dstCfg DstConfig) {
 	var bIsWin32, bIsWin64 bool
 	var bDpAgentIsDead bool
 
@@ -56,11 +56,14 @@ func CopyPmFilesToBin(sourcePaths []string) {
 				bDpAgentIsDead = KillDpAgent()
 			}
 
-			programs32Folder := os.Getenv("ProgramFiles(x86)")
-			if programs32Folder == "" {
-				programs32Folder = `C:\Program Files (x86)`
+			bin32Folder := dstCfg.Win32
+			if bin32Folder == "" {
+				programs32Folder := os.Getenv("ProgramFiles(x86)")
+				if programs32Folder == "" {
+					programs32Folder = `C:\Program Files (x86)`
+				}
+				bin32Folder = filepath.Join(programs32Folder, `DigitalPersona\Bin`)
 			}
-			bin32Folder := filepath.Join(programs32Folder, `DigitalPersona\Bin`)
 
 			fmt.Printf("From %s to %s\n", sourcePath, bin32Folder)
 
@@ -75,11 +78,14 @@ func CopyPmFilesToBin(sourcePaths []string) {
 				bDpAgentIsDead = KillDpAgent()
 			}
 
-			programs64Folder := os.Getenv("ProgramFiles")
-			if programs64Folder == "" {
-				programs64Folder = `C:\Program Files`
+			bin64Folder := dstCfg.X64
+			if bin64Folder == "" {
+				programs64Folder := os.Getenv("ProgramFiles")
+				if programs64Folder == "" {
+					programs64Folder = `C:\Program Files`
+				}
+				bin64Folder = filepath.Join(programs64Folder, `DigitalPersona\Bin`)
 			}
-			bin64Folder := filepath.Join(programs64Folder, `DigitalPersona\Bin`)
 
 			fmt.Printf("From %s to %s\n", sourcePath, bin64Folder)
 

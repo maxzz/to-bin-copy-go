@@ -1,10 +1,20 @@
 {
-  "sourcePathsDebug": [
-    "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.Win32",
-    "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.x64"
-  ],
-  "sourcePathsRelease": [
-    "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.Win32",
-    "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64"
-  ]
+  "dp": {
+    "paths": {
+      "src": {
+        "debug": [
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.Win32",
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.x64"
+        ],
+        "release": [
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.Win32",
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.x64"
+        ]
+      },
+      "dst": {
+        "win32": "",
+        "x64": ""
+      }
+    }
+  }
 }

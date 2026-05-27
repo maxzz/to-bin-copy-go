@@ -12,8 +12,26 @@ import (
 )
 
 type Config struct {
-	SourcePathsDebug   []string `json:"sourcePathsDebug"`
-	SourcePathsRelease []string `json:"sourcePathsRelease"`
+	Dp DpConfig `json:"dp"`
+}
+
+type DpConfig struct {
+	Paths PathsConfig `json:"paths"`
+}
+
+type PathsConfig struct {
+	Src SrcConfig `json:"src"`
+	Dst DstConfig `json:"dst"`
+}
+
+type SrcConfig struct {
+	Debug   []string `json:"debug"`
+	Release []string `json:"release"`
+}
+
+type DstConfig struct {
+	Win32 string `json:"win32"`
+	X64   string `json:"x64"`
 }
 
 type AppArgs struct {
@@ -60,24 +78,26 @@ func readRegistryConfig() (*Config, error) {
 	
 	debugPaths, _, err := k.GetStringsValue("sourcePathsDebug")
 	if err == nil {
-		cfg.SourcePathsDebug = debugPaths
+		cfg.Dp.Paths.Src.Debug = debugPaths
 	}
 	
 	releasePaths, _, err := k.GetStringsValue("sourcePathsRelease")
 	if err == nil {
-		cfg.SourcePathsRelease = releasePaths
+		cfg.Dp.Paths.Src.Release = releasePaths
 	}
 
 	return cfg, nil
 }
 
-// GetSourcePaths resolves which source paths to use.
-// It returns (paths, modeName, sourceUsed, err).
-func GetSourcePaths(args AppArgs) ([]string, string, string, error) {
+// GetSourcePaths resolves which source paths and destination paths to use.
+// It returns (paths, dstConfig, modeName, sourceUsed, err).
+func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
 	mode := "Debug"
 	if args.IsRelease {
 		mode = "Release"
 	}
+
+	var emptyDst DstConfig
 
 	// 1. If explicit sources are given via CLI
 	if args.Source != "" {
@@ -85,15 +105,15 @@ func GetSourcePaths(args AppArgs) ([]string, string, string, error) {
 		for i, p := range paths {
 			paths[i] = strings.TrimSpace(p)
 		}
-		return paths, mode, "CLI Flag", nil
+		return paths, emptyDst, mode, "CLI Flag", nil
 	}
 
 	// Helper to extract the right paths from Config
 	getPathsFromConfig := func(cfg *Config) []string {
 		if args.IsRelease {
-			return cfg.SourcePathsRelease
+			return cfg.Dp.Paths.Src.Release
 		}
-		return cfg.SourcePathsDebug
+		return cfg.Dp.Paths.Src.Debug
 	}
 
 	// 2. Try loading config from specified config path (or default "config.json")
@@ -101,7 +121,7 @@ func GetSourcePaths(args AppArgs) ([]string, string, string, error) {
 	if err == nil {
 		paths := getPathsFromConfig(cfg)
 		if len(paths) > 0 {
-			return paths, mode, fmt.Sprintf("Config File (%s)", args.ConfigPath), nil
+			return paths, cfg.Dp.Paths.Dst, mode, fmt.Sprintf("Config File (%s)", args.ConfigPath), nil
 		}
 	}
 
@@ -114,7 +134,7 @@ func GetSourcePaths(args AppArgs) ([]string, string, string, error) {
 				if cfg, err := loadConfig(altConfigPath); err == nil {
 					paths := getPathsFromConfig(cfg)
 					if len(paths) > 0 {
-						return paths, mode, fmt.Sprintf("Config File (%s)", altConfigPath), nil
+						return paths, cfg.Dp.Paths.Dst, mode, fmt.Sprintf("Config File (%s)", altConfigPath), nil
 					}
 				}
 			}
@@ -126,10 +146,10 @@ func GetSourcePaths(args AppArgs) ([]string, string, string, error) {
 	if err == nil {
 		paths := getPathsFromConfig(regCfg)
 		if len(paths) > 0 {
-			return paths, mode, "Windows Registry", nil
+			return paths, regCfg.Dp.Paths.Dst, mode, "Windows Registry", nil
 		}
 	}
 
 	// 4. No paths found
-	return nil, mode, "", fmt.Errorf("no source paths found! Please configure them in config.json, Windows Registry, or pass via the -source flag")
+	return nil, emptyDst, mode, "", fmt.Errorf("no source paths found! Please configure them in config.json, Windows Registry, or pass via the -source flag")
 }

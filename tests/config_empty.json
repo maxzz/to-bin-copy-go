@@ -1,4 +1,14 @@
 {
-  "sourcePathsDebug": [],
-  "sourcePathsRelease": []
+  "dp": {
+    "paths": {
+      "src": {
+        "debug": [],
+        "release": []
+      },
+      "dst": {
+        "win32": "",
+        "x64": ""
+      }
+    }
+  }
 }

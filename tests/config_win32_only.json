@@ -1,8 +1,18 @@
 {
-  "sourcePathsDebug": [
-    "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.Win32"
-  ],
-  "sourcePathsRelease": [
-    "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.Win32"
-  ]
+  "dp": {
+    "paths": {
+      "src": {
+        "debug": [
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Debug.Win32"
+        ],
+        "release": [
+          "C:\\y\\c\\dp\\pm-native\\src\\~Output\\Release.Win32"
+        ]
+      },
+      "dst": {
+        "win32": "C:\\Program Files (x86)\\DigitalPersona\\Bin",
+        "x64": ""
+      }
+    }
+  }
 }
