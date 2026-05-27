@@ -17,18 +17,9 @@ vendor/
 
 # Node/npm
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
 
 # IDEs and editors
-.idea/
-.vscode/
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
+#.vscode/
 
 # System Files
 Thumbs.db
