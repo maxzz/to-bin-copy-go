@@ -19,7 +19,7 @@ This utility is a direct conversion of the original C# WinForms application `Cop
 - [How to Run](#how-to-run)
   - [Command-Line Arguments](#command-line-arguments)
   - [Examples](#examples)
-- [Example Configurations (tests/ directory)](#example-configurations-tests-directory)
+  - [Example Configurations](#example-configurations-tests-directory)
 - [Folder Structure](#folder-structure)
 - [How to Build and Run (Using NPM/Node scripts)](#how-to-build-and-run-using-npm-node-scripts)
   - [Using NPM Scripts](#using-npm-scripts)
@@ -182,30 +182,24 @@ It is crucial to clarify that the **Debug** and **Release** target modes **do no
 
 ### Examples
 
-**1. Standard Run (Debug, uses registry fallback or local `config.json`):**
 ```bash
+# 1. Standard Run (Debug, uses registry fallback or local `config.json`):
 # Run with administrator privileges
 .\copy-pm-files.exe
-```
 
-**2. Run in Release Mode:**
-```bash
+# 2. Run in Release Mode:
 .\copy-pm-files.exe -release
-```
 
-**3. Run with Custom Paths directly (bypassing configs):**
-```bash
+# 3. Run with Custom Paths directly (bypassing configs):
 .\copy-pm-files.exe -source "C:/MySources/Debug.Win32,C:/MySources/Debug.x64"
-```
 
-**4. Run with a Custom Configuration File:**
-```bash
+# 4. Run with a Custom Configuration File:
 .\copy-pm-files.exe -config C:/Users/Public/my_custom_config.json
 ```
 
 ---
 
-## Example Configurations (`tests/` directory)
+### Example Configurations
 
 We have provided several configurations inside the `tests/` folder for reference or testing:
 
@@ -229,9 +223,12 @@ npm start -- -config tests/config_custom_drive_paths.json
   - `main.go`: Entry point and program orchestration.
   - `config.go`: Argument parsing, JSON configuration, and Windows Registry integration.
   - `help.go`: Modular help output displaying usage, default options, and behaviors.
+  - `print.go`: Modular startup printing logic, active items formatting, and elevation warnings.
   - `process.go`: Graceful Win32 process search and close logic for `DPAgent.exe`.
   - `copy.go`: Core copy loop, timestamp comparison, and locked file renaming.
+  - `version.go`: Auto-generated version declaration.
   - `copy_test.go`: Unit tests for file utility behaviors.
+  - `config_test.go`: Unit tests for argument resolution, configuration loading, and comment-stripping logic.
 - `scripts/`: Development and utility scripts.
   - `build.js`: Auto-incrementing version builder that compiles the Go binary.
 - `tests/`: Directory containing various preconfigured examples of JSON configuration files.
