@@ -194,7 +194,7 @@ func loadConfig(path string) (*Config, error) {
 
 // readRegistryConfig tries to read the configuration from Windows Registry.
 func readRegistryConfig() (*PathBlock, error) {
-	const regPath = `SOFTWARE\SergeiMenchenin\CopyPmFilesToBin`
+	const regPath = `SOFTWARE\AATanam\CopyPmFilesToBin`
 	k, err := registry.OpenKey(registry.CURRENT_USER, regPath, registry.QUERY_VALUE)
 	if err != nil {
 		return nil, err

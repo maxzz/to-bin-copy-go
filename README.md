@@ -33,7 +33,7 @@ This utility is a direct conversion of the original C# WinForms application `Cop
    - **CLI Source flag (`-source`)**: Manually pass a comma-separated list of paths to bypass configuration files completely.
    - **Custom Config File (`-config <path>`)**: Point the tool to a custom JSON configuration file.
    - **Default Config File (`config.json`)**: Looks for a `config.json` file in the current working directory, and falls back to looking next to the executable.
-   - **Windows Registry Compatibility**: If no config files are found or configured paths are empty, it automatically reads the registry key used by the C# application (`HKEY_CURRENT_USER\SOFTWARE\SergeiMenchenin\CopyPmFilesToBin`), making it fully backward-compatible with your existing registry setup!
+   - **Windows Registry Compatibility**: If no config files are found or configured paths are empty, it automatically reads the registry key used by the C# application (`HKEY_CURRENT_USER\SOFTWARE\AATanam\CopyPmFilesToBin`), making it fully backward-compatible with your existing registry setup!
 
 2. **Graceful DPAgent Termination**:
    - Uses native Windows Win32 API (`FindWindowW`, `PostMessageW`, and `WaitForSingleObject`) via `golang.org/x/sys/windows` to gracefully request `DPAgent.exe` to close, and waits for its exit before performing the file copy.

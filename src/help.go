@@ -50,7 +50,7 @@ func PrintHelp() {
 	fmt.Println("     - Else, the tool tries to load the specified config JSON file (defaults to \"config.json\").")
 	fmt.Println("     - If the config file cannot be loaded or contains no paths, the tool automatically falls back")
 	fmt.Println("       to reading paths from the Windows Registry key:")
-	fmt.Println("         HKEY_CURRENT_USER\\SOFTWARE\\SergeiMenchenin\\CopyPmFilesToBin")
+	fmt.Println("         HKEY_CURRENT_USER\\SOFTWARE\\AATanam\\CopyPmFilesToBin")
 	fmt.Println("     - If no paths are resolved via any method, the program outputs an error and exits.")
 	fmt.Println()
 	fmt.Println("  2. Destination Path Defaults:")

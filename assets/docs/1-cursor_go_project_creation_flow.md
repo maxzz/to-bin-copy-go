@@ -71,7 +71,7 @@ Flexible Configuration Resolution (Hierarchical Fallback)
 CLI Flag (-source): You can directly pass a comma-separated list of paths to bypass configuration files (e.g. to-bin-copy-go -source "C:\src\Win32,C:\src\x64").
 Custom Config File (-config <path>): Specify any custom configuration file path.
 Default Config File (config.json): If no custom paths or config files are passed, it checks for a config.json next to your executable or in the current working directory.
-Full Windows Registry Backward-Compatibility: If no config files exist or if the paths in them are empty, the tool automatically reads your existing Windows Registry key: HKEY_CURRENT_USER\SOFTWARE\SergeiMenchenin\CopyPmFilesToBin (keys: sourcePathsDebug and sourcePathsRelease as multi-string arrays). This means it works out of the box using your existing setup!
+Full Windows Registry Backward-Compatibility: If no config files exist or if the paths in them are empty, the tool automatically reads your existing Windows Registry key: HKEY_CURRENT_USER\SOFTWARE\AATanam\CopyPmFilesToBin (keys: sourcePathsDebug and sourcePathsRelease as multi-string arrays). This means it works out of the box using your existing setup!
 Native Win32 Graceful DPAgent Termination
 
 Ported the Win32 API functions (FindWindowW, PostMessageW, WaitForSingleObject) using golang.org/x/sys/windows.
@@ -944,7 +944,7 @@ I created a separate file src/help.go containing the PrintHelp() function. This 
 -config flag defaults: Explicitly details that it defaults to "config.json" and searches the current working directory, then falls back to next to the executable.
 -release flag defaults: Explains that by default it is false (targets Debug compiled files) and targets Release compiled files when set to true.
 -source flag defaults: Describes how specifying it bypasses configuration resolution, and when omitted, the tool automatically tries the config file first, then falls back to the registry.
-Default Fallbacks: Details the step-by-step resolution from local JSON config to Windows Registry (HKEY_CURRENT_USER\SOFTWARE\SergeiMenchenin\CopyPmFilesToBin).
+Default Fallbacks: Details the step-by-step resolution from local JSON config to Windows Registry (HKEY_CURRENT_USER\SOFTWARE\AATanam\CopyPmFilesToBin).
 Default Destination Paths: Explicitly describes that if "win32" or "x64" paths under "dp.paths.dst" in the config file are empty, omitted, or null, they will automatically target:
 Win32: %ProgramFiles(x86)%/DigitalPersona/Bin
 x64: %ProgramFiles%/DigitalPersona/Bin
@@ -1129,7 +1129,7 @@ I updated the modular PrintHelp() screen. The entire block dedicated to fallback
 	fmt.Println("     - Else, the tool tries to load the specified config JSON file (defaults to \"config.json\").")
 	fmt.Println("     - If the config file cannot be loaded or contains no paths, the tool automatically falls back")
 	fmt.Println("       to reading paths from the Windows Registry key:")
-	fmt.Println("         HKEY_CURRENT_USER\\SOFTWARE\\SergeiMenchenin\\CopyPmFilesToBin")
+	fmt.Println("         HKEY_CURRENT_USER\\SOFTWARE\\AATanam\\CopyPmFilesToBin")
 	fmt.Println("     - If no paths are resolved via any method, the program outputs an error and exits.")
 	fmt.Println()
 	fmt.Println("  2. Destination Path Defaults:")
