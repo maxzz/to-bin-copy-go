@@ -30,50 +30,45 @@ This utility is a direct conversion of the original C# WinForms application `Cop
 
 ## Folder Structure
 
-- `main.go`: Entry point and program orchestration.
-- `config.go`: Argument parsing, JSON configuration, and Windows Registry integration.
-- `process.go`: Graceful Win32 process search and close logic for `DPAgent.exe`.
-- `copy.go`: Core copy loop, timestamp comparison, and locked file renaming.
+- `src/`: Directory containing all Go source files.
+  - `main.go`: Entry point and program orchestration.
+  - `config.go`: Argument parsing, JSON configuration, and Windows Registry integration.
+  - `process.go`: Graceful Win32 process search and close logic for `DPAgent.exe`.
+  - `copy.go`: Core copy loop, timestamp comparison, and locked file renaming.
+  - `copy_test.go`: Unit tests for file utility behaviors.
 - `config.json`: Sample configuration file template.
+- `package.json`: NPM package manifest for unified scripts (run, test, build).
+- `.gitignore`: Configured to ignore Go/Node/Windows artifacts and generated binaries.
 
 ---
 
-## File Copies Performed
+## How to Build and Run (Using NPM/Node scripts)
 
-Based on the suffix of each source path, the tool copies the appropriate architecture-specific files:
+You can run the project using standard `npm` commands or the direct `go` commands below.
 
-### Win32 Source Paths (ending with `Win32`)
-Copies to `C:\Program Files (x86)\DigitalPersona\Bin`:
-- `DpAgent.exe`
-- `DpFbView.dll`
-- `DpOFeedb.dll`
-- `DpoPS.dll`
-- `DpoSet.dll`
-- `DPPMAdminConsole.exe`
-- `DpoSetA.dll`
-- `DpoTrain.dll`
-- `DpoTrainMgr.dll`
-- `DpStgCat.dll`
+### Using NPM Scripts
 
-### x64 Source Paths (ending with `x64`)
-Copies to `C:\Program Files\DigitalPersona\Bin`:
-- `DpAgentOtsPlugin.dll`
-- `DpAgentOtsPlugin.WebSdk.dll`
-- `DpFbView.dll`
-- `DpImporter.dll`
-- `DpMiniDS.dll`
-- `DpOCache.dll`
-- `DpOFeedb.dll`
-- `DpOnlineIDs.dll`
-- `DpoPS.dll`
-- `DpoSet.dll`
-- `DpOtsMsg.dll`
-- `DpUtt.dll`
-- `DsDashboard.dll`
+- **Run in Debug Mode (Default):**
+  ```bash
+  npm start
+  ```
+- **Run in Release Mode:**
+  ```bash
+  npm run start:release
+  ```
+- **Build the executable:**
+  ```bash
+  npm run build
+  ```
+  This creates the compiled binary in `bin/copy-pm-files.exe`.
+- **Run unit tests:**
+  ```bash
+  npm test
+  ```
 
 ---
 
-## How to Build
+## How to Build (Using Native Go Commands)
 
 First, make sure you have Go installed on your machine.
 
