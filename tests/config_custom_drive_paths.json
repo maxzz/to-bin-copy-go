@@ -1,0 +1,10 @@
+{
+  "sourcePathsDebug": [
+    "D:\\BuildServer\\Artifacts\\Project_Win32",
+    "D:\\BuildServer\\Artifacts\\Project_x64"
+  ],
+  "sourcePathsRelease": [
+    "D:\\BuildServer\\Artifacts\\Release\\Project_Win32",
+    "D:\\BuildServer\\Artifacts\\Release\\Project_x64"
+  ]
+}

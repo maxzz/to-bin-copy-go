@@ -36,6 +36,7 @@ This utility is a direct conversion of the original C# WinForms application `Cop
   - `process.go`: Graceful Win32 process search and close logic for `DPAgent.exe`.
   - `copy.go`: Core copy loop, timestamp comparison, and locked file renaming.
   - `copy_test.go`: Unit tests for file utility behaviors.
+- `tests/`: Directory containing various preconfigured examples of JSON configuration files.
 - `config.json`: Sample configuration file template.
 - `package.json`: NPM package manifest for unified scripts (run, test, build).
 - `.gitignore`: Configured to ignore Go/Node/Windows artifacts and generated binaries.
@@ -134,3 +135,21 @@ If you prefer using a `config.json` file rather than command-line arguments or t
 }
 ```
 *(Note: Backslashes in paths must be escaped as `\\` inside JSON).*
+
+---
+
+## Example Configurations (`tests/` directory)
+
+We have provided several configurations inside the `tests/` folder for reference or testing:
+
+- **`config_full_dual_arch.json`**: Complete setup with both Win32 and x64 directories configured for both Debug and Release environments.
+- **`config_x64_only.json`**: Restricts actions only to the 64-bit destination.
+- **`config_win32_only.json`**: Restricts actions only to the 32-bit (x86) destination.
+- **`config_custom_drive_paths.json`**: Demonstrates the use of alternate drives and directory naming layouts (e.g. `D:\BuildServer`).
+- **`config_empty.json`**: Empty arrays structure, triggering registry fallbacks when run.
+
+You can try using any of these by passing the `-config` flag:
+```bash
+# Run using the custom drive configuration example
+npm start -- -config tests/config_custom_drive_paths.json
+```
