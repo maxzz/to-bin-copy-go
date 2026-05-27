@@ -6,6 +6,21 @@ import (
 	"testing"
 )
 
+/*
+TestCleanAndNormalizePaths tests the cleanAndNormalizePaths function.
+
+Description:
+It verifies that a slice of raw file paths containing forward slashes, backslashes, mixed
+slashes, trailing slashes, and redundant spaces is correctly cleaned and normalized to
+conform to the host operating system's standard file path format.
+
+Examples:
+- Input:  []string{"C:/y/c/dp/  ", "  D:\\some\\other/path/ "}
+  Output: []string{"C:\\y\\c\\dp", "D:\\some\\other\\path"} (on Windows)
+
+- Input:  []string{"C:/y/c/dp/", "D:\\some\\path\\"}
+  Output: []string{"C:\\y\\c\\dp", "D:\\some\\path"} (on Windows)
+*/
 func TestCleanAndNormalizePaths(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -39,6 +54,38 @@ func TestCleanAndNormalizePaths(t *testing.T) {
 	}
 }
 
+/*
+TestLoadConfig tests the loadConfig function.
+
+Description:
+It verifies that the loadConfig function successfully reads and parses the JSON configuration
+structure. It also ensures that stripComments correctly filters out JavaScript-style single-line (//)
+and multi-line (/* ... * /) comments from the file contents prior to JSON unmarshaling, without
+breaking nested string fields or valid brackets.
+
+Example JSON input with comments:
+{
+    // Comment line
+    "items": [
+        {
+            "name": "set-1",
+            "isActive": true,
+            "paths": { "dp": true, "src": { "debug": ["C:/src/Win32"] } }
+        }
+    ]
+}
+
+Expected output parsed struct:
+Config{
+    Items: []ConfigItem{
+        {
+            Name: "set-1",
+            IsActive: true,
+            Paths: &PathBlock{ Dp: true, Src: SrcConfig{ Debug: ["C:/src/Win32"] } }
+        }
+    }
+}
+*/
 func TestLoadConfig(t *testing.T) {
 	// Create a temporary config file with comments to ensure our stripComments works
 	tmpDir, err := os.MkdirTemp("", "config-test")
@@ -114,6 +161,28 @@ func TestLoadConfig(t *testing.T) {
 	}
 }
 
+/*
+TestResolveConfigAndItems tests the ResolveConfigAndItems function.
+
+Description:
+It verifies the hierarchical config resolution, flag priority, and filtering logic of our application:
+1. **Case 1 (CLI Override)**: Supplying a manual `-source` CLI flag bypasses file-loading entirely and
+   generates an ad-hoc configuration item.
+   - Example Input flags: `AppArgs{Source: "C:/custom/Win32,C:/custom/x64"}`
+   - Expected Output: `[]ConfigItem` containing 1 item named "CLI Source Flag Override", `configPath = ""`
+2. **Case 2 (Active Sets)**: Running with a config file without specifying a `-set` flag filters and
+   returns only items where `isActive` is `true`.
+   - Example Input flags: `AppArgs{ConfigPath: tmpFile}`
+   - Expected Output: Only returns `active-set`
+3. **Case 3 (Set Selection)**: Supplying a specific set name using the `-set` flag filters and returns
+   only that matching item, completely ignoring its default `isActive` flag.
+   - Example Input flags: `AppArgs{ConfigPath: tmpFile, SetName: "inactive-set"}`
+   - Expected Output: Returns `inactive-set` (even though its isActive is false)
+4. **Case 4 (Non-Existent Set Error)**: Requesting a set name that does not exist in the file returns
+   a clean and helpful error.
+   - Example Input flags: `AppArgs{ConfigPath: tmpFile, SetName: "does-not-exist"}`
+   - Expected Output: `err != nil`
+*/
 func TestResolveConfigAndItems(t *testing.T) {
 	// Create a temporary config file
 	tmpDir, err := os.MkdirTemp("", "resolve-test")

@@ -10,6 +10,24 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+/*
+TestSplitUnescaped tests the splitUnescaped function.
+
+Description:
+It verifies that splitUnescaped correctly splits a string by a given separator rune,
+while respecting backslash escaping (e.g., matching literal commas and ignoring escaped ones),
+and ensuring standard Windows backslashes are preserved for regular directories.
+
+Examples:
+- Input s: `C:/Path1,C:/Path2`, sep: `,`, escape: `\`
+  Expected Output: `[]string{"C:/Path1", "C:/Path2"}`
+
+- Input s: `C:/Folder\, With Comma/Win32,C:/NormalPath/x64`, sep: `,`, escape: `\`
+  Expected Output: `[]string{"C:/Folder, With Comma/Win32", "C:/NormalPath/x64"}`
+
+- Input s: `C:\Path\With\Backslashes,D:\Other\Path`, sep: `,`, escape: `\`
+  Expected Output: `[]string{"C:\\Path\\With\\Backslashes", "D:\\Other\\Path"}`
+*/
 func TestSplitUnescaped(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -58,6 +76,27 @@ func TestSplitUnescaped(t *testing.T) {
 	}
 }
 
+/*
+TestStripComments tests the stripComments function.
+
+Description:
+It verifies that stripComments successfully deletes single-line (//...) and multi-line (/*...* /)
+JavaScript/C++ style comments from raw byte blocks while preserving characters inside string literals,
+allowing comments to be placed anywhere inside configuration files.
+
+Example Input:
+{
+    // This is a line comment
+    "name": "test", /* block comment * /
+    "url": "http://example.com/api"
+}
+
+Expected Output:
+{
+    "name": "test", 
+    "url": "http://example.com/api"
+}
+*/
 func TestStripComments(t *testing.T) {
 	input := []byte(`{
 		// This is a line comment
@@ -93,6 +132,20 @@ func TestStripComments(t *testing.T) {
 	}
 }
 
+/*
+TestIsSharingViolation tests the isSharingViolation function.
+
+Description:
+It verifies that isSharingViolation correctly detects Windows sharing violations (ERROR_SHARING_VIOLATION = 32),
+including standard errors, direct error numbers, and nested/wrapped os.PathError structures.
+
+Examples:
+- Input: `nil` -> Expected: `false`
+- Input: `errors.New("some standard error")` -> Expected: `false`
+- Input: `windows.ERROR_SHARING_VIOLATION` -> Expected: `true`
+- Input: `&os.PathError{Err: windows.ERROR_SHARING_VIOLATION}` -> Expected: `true`
+- Input: `&os.PathError{Err: syscall.ENOTDIR}` -> Expected: `false`
+*/
 func TestIsSharingViolation(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -143,4 +196,3 @@ func TestIsSharingViolation(t *testing.T) {
 		})
 	}
 }
-
