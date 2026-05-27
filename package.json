@@ -1,6 +1,6 @@
 {
     "name": "to-bin-copy-go",
-    "version": "1.0.0",
+    "version": "1.0.4",
     "description": "Binaries File Copier (Go Version) - CLI Utility for copying built binaries",
     "author": "Max Zakharzhevskiy",
     "license": "MIT",
@@ -15,7 +15,7 @@
         "start": "go run ./src",
         "start:release": "go run ./src -release",
         "start:custom": "go run ./src -source",
-        "build": "go build -o bin/copy-pm-files.exe ./src",
+        "build": "node scripts/build.js",
         "test": "go test -v ./src/..."
     }
 }

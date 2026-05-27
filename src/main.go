@@ -20,7 +20,7 @@ func main() {
 	args := parseArgs()
 
 	// Get resolved source paths and destination configurations
-	paths, dstCfg, mode, sourceUsed, err := GetSourcePaths(args)
+	paths, dstCfg, mode, sourceUsed, configFilePath, err := GetSourcePaths(args)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, ColorRed+"Error: %v\n\n"+ColorReset, err)
 		PrintHelp()
@@ -28,10 +28,13 @@ func main() {
 	}
 
 	fmt.Println(ColorCyan + "==================================================" + ColorReset)
-	fmt.Println(ColorCyan + ColorBold + "  DigitalPersona PM File Copier (Go Version)" + ColorReset)
+	fmt.Println(ColorCyan + ColorBold + "  DigitalPersona PM File Copier (Go Version) v" + Version + ColorReset)
 	fmt.Println(ColorCyan + "==================================================" + ColorReset)
 	fmt.Printf("Target Files Mode: %s (Debug or Release builds)\n", ColorGreen+mode+ColorReset)
 	fmt.Printf("Source Resolved:   %s\n", ColorGreen+sourceUsed+ColorReset)
+	if configFilePath != "" {
+		fmt.Printf("Config File Used:  %s\n", ColorGreen+configFilePath+ColorReset)
+	}
 	fmt.Println("Source Paths:")
 	for _, p := range paths {
 		fmt.Printf("  - %s\n", p)

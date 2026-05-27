@@ -66,6 +66,24 @@ func parseArgs() AppArgs {
 		os.Exit(2)
 	}
 
+	configSpecified := false
+	sourceSpecified := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "config" {
+			configSpecified = true
+		}
+		if f.Name == "source" {
+			sourceSpecified = true
+		}
+	})
+
+	if !configSpecified && !sourceSpecified {
+		fmt.Fprintln(os.Stderr, ColorYellow+"Warning: No configuration file was specified and the --source option remains undefined."+ColorReset)
+		fmt.Fprintln(os.Stderr)
+		PrintHelp()
+		os.Exit(1)
+	}
+
 	// If there are any unexpected positional arguments, treat it as an invalid call.
 	if fs.NArg() > 0 {
 		fmt.Fprintln(os.Stderr, ColorYellow+fmt.Sprintf("Error: unexpected positional argument(s): %v", fs.Args())+ColorReset)
@@ -231,8 +249,8 @@ func cleanAndNormalizePaths(paths []string) []string {
 }
 
 // GetSourcePaths resolves which source paths and destination paths to use.
-// It returns (paths, dstConfig, modeName, sourceUsed, err).
-func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
+// It returns (paths, dstConfig, modeName, sourceUsed, configFilePath, err).
+func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, string, error) {
 	mode := "Debug"
 	if args.IsRelease {
 		mode = "Release"
@@ -243,7 +261,7 @@ func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
 	// 1. If explicit sources are given via CLI
 	if args.Source != "" {
 		paths := splitUnescaped(args.Source, ',', '\\')
-		return cleanAndNormalizePaths(paths), emptyDst, mode, "CLI Flag", nil
+		return cleanAndNormalizePaths(paths), emptyDst, mode, "CLI Flag", "", nil
 	}
 
 	// Helper to extract the right paths from Config
@@ -270,7 +288,8 @@ func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
 	if err == nil {
 		paths := getPathsFromConfig(cfg)
 		if len(paths) > 0 {
-			return cleanAndNormalizePaths(paths), normalizeDst(cfg.Dp.Paths.Dst), mode, fmt.Sprintf("Config File (%s)", args.ConfigPath), nil
+			absPath, _ := filepath.Abs(args.ConfigPath)
+			return cleanAndNormalizePaths(paths), normalizeDst(cfg.Dp.Paths.Dst), mode, fmt.Sprintf("Config File (%s)", args.ConfigPath), absPath, nil
 		}
 	}
 
@@ -283,7 +302,8 @@ func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
 				if cfg, err := loadConfig(altConfigPath); err == nil {
 					paths := getPathsFromConfig(cfg)
 					if len(paths) > 0 {
-						return cleanAndNormalizePaths(paths), normalizeDst(cfg.Dp.Paths.Dst), mode, fmt.Sprintf("Config File (%s)", altConfigPath), nil
+						absPath, _ := filepath.Abs(altConfigPath)
+						return cleanAndNormalizePaths(paths), normalizeDst(cfg.Dp.Paths.Dst), mode, fmt.Sprintf("Config File (%s)", altConfigPath), absPath, nil
 					}
 				}
 			}
@@ -295,10 +315,10 @@ func GetSourcePaths(args AppArgs) ([]string, DstConfig, string, string, error) {
 	if err == nil {
 		paths := getPathsFromConfig(regCfg)
 		if len(paths) > 0 {
-			return cleanAndNormalizePaths(paths), normalizeDst(regCfg.Dp.Paths.Dst), mode, "Windows Registry", nil
+			return cleanAndNormalizePaths(paths), normalizeDst(regCfg.Dp.Paths.Dst), mode, "Windows Registry", "", nil
 		}
 	}
 
 	// 4. No paths found
-	return nil, emptyDst, mode, "", fmt.Errorf("no source paths found! Please configure them in config.json, Windows Registry, or pass via the -source flag")
+	return nil, emptyDst, mode, "", "", fmt.Errorf("no source paths found! Please configure them in config.json, Windows Registry, or pass via the -source flag")
 }

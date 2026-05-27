@@ -7,7 +7,7 @@ import (
 // PrintHelp prints the utility's usage instructions, flag descriptions, and default behaviors with ansi colors.
 func PrintHelp() {
 	fmt.Println(ColorCyan + "==========================================================" + ColorReset)
-	fmt.Println(ColorCyan + ColorBold + "       DigitalPersona PM File Copier (Go Version)" + ColorReset)
+	fmt.Println(ColorCyan + ColorBold + "       DigitalPersona PM File Copier (Go Version) v" + Version + ColorReset)
 	fmt.Println(ColorCyan + ColorBold + "                      HELP & USAGE" + ColorReset)
 	fmt.Println(ColorCyan + "==========================================================" + ColorReset)
 	fmt.Println(ColorBold + "Usage:" + ColorReset)

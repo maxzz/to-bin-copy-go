@@ -37,6 +37,8 @@ This utility is a direct conversion of the original C# WinForms application `Cop
   - `process.go`: Graceful Win32 process search and close logic for `DPAgent.exe`.
   - `copy.go`: Core copy loop, timestamp comparison, and locked file renaming.
   - `copy_test.go`: Unit tests for file utility behaviors.
+- `scripts/`: Development and utility scripts.
+  - `build.js`: Auto-incrementing version builder that compiles the Go binary.
 - `tests/`: Directory containing various preconfigured examples of JSON configuration files.
 - `config.json`: Sample configuration file template.
 - `package.json`: NPM package manifest for unified scripts (run, test, build).
