@@ -87,6 +87,7 @@ Each item in `"items"` contains:
     - **`x64` (String)**: Target folder for x64 files (defaults to `%ProgramFiles%\DigitalPersona\Bin`).
   - **`srcFilesInclude` (Array of Strings, Optional)**: Active only when `dp` is `false`. List of regular expression patterns. Only files whose relative paths from the source directory match any of these patterns are copied. If omitted, all files are matched by default.
   - **`srcFilesExclude` (Array of Strings, Optional)**: Active only when `dp` is `false`. List of regular expression patterns. Any files matching these patterns are excluded from being copied.
+  - **`restart` (Boolean, Optional)**: Active only when `dp` is `true`. If set to `true`, the utility will automatically restart `DPAgent.exe` from the target binary folder once all copying actions are complete.
 - **`files` (Array of Objects, Optional)**: An alternative block of actions specifying individual files to copy directly:
   - **`src` (String)**: Full path and filename of the source file.
   - **`dst` (String)**: Full path and filename of the destination file.
@@ -101,6 +102,7 @@ Each item in `"items"` contains:
       "isActive": true,
       "paths": {
         "dp": true,
+        "restart": true,
         "src": {
           "debug": [
             "C:/y/c/dp/pm-native/src/~Output/Debug.Win32/",
@@ -215,6 +217,7 @@ Within this key, the utility looks for two specific values depending on the targ
 | `-source <paths>` | Comma-separated list of custom source directories to copy files from. Bypasses configuration files and Windows Registry fallbacks completely. | Unspecified.<br>- **Spaces**: Enclose the list in double quotes, e.g. `-source "C:/Folder With Spaces/Win32,C:/Other Folder/x64"`. <br>- **Commas**: Escape literal commas with a backslash, e.g. `\,`. |
 | `-set <name>` | Designates a specific configuration set inside `config.json` to execute (and only this one). | Unspecified (by default, processes all sets where `isActive` is `true`). Executes the matching set regardless of its `isActive` flag status. |
 | `-force` | Force copy all matched files, bypassing the default timestamp comparison checks. | `false` (by default, copies only if the source file is strictly newer than the destination). |
+| `-restart` | Automatically restart `DPAgent.exe` immediately after all files have finished copying. | `false` (by default, DPAgent is stopped before copying but is not automatically restarted). Active only when the `dp` option is used. |
 
 ### Examples
 
@@ -282,7 +285,7 @@ This utility orchestrates a structured, multi-step pipeline to safely and effici
 
 1. **Initialization & CLI Parsing**: 
    - Activates ANSI virtual terminal sequence processing to support colored console logs in Windows.
-   - Parses the command-line flags (`-release`, `-config`, `-source`, `-set`, and `-force`).
+   - Parses the command-line flags (`-release`, `-config`, `-source`, `-set`, `-force`, and `-restart`).
    - Checks if running with Administrator privileges and outputs a standard user warning if copying might require elevation.
 
 2. **Hierarchical Configuration Resolution**:
@@ -295,9 +298,10 @@ This utility orchestrates a structured, multi-step pipeline to safely and effici
    - Normalizes all forward/backward slashes and strips trailing slashes to prevent join errors.
    - Categorizes each source path as `Win32` or `x64` based on suffix detection (e.g., `Debug.Win32`).
 
-4. **Graceful Service Termination**:
+4. **Graceful Service Termination & Restart**:
    - Before attempting to overwrite any binaries, the utility uses the Win32 API (`FindWindowW` and `PostMessageW`) to safely post a `WM_CLOSE` message to the `DPAgent.exe` application window.
    - It waits up to 10 seconds for the service process to exit peacefully, preventing file lock conflicts.
+   - If the `-restart` CLI flag or optional `restart: true` JSON configuration property is active when using the `dp` option, `DPAgent.exe` will be automatically launched/restarted immediately after all copy operations have finished.
 
 5. **Smart Timestamp Comparison & Force Flag**:
    - For each target file, the tool compares the source and destination files' "Last Modified" times in UTC.
@@ -369,7 +373,10 @@ flowchart TD
     MoreFiles -- No --> MoreItems{More Config Items?}
     
     MoreItems -- Yes --> ExecItems
-    MoreItems -- No --> Finish([Print Process Complete & Exit])
+    MoreItems -- No --> CheckRestart{Is DPAgent Restart <br> Requested & dp Active?}
+    CheckRestart -- Yes --> StartDpAgent[Restart DPAgent.exe <br> from Target Directory]
+    CheckRestart -- No --> Finish
+    StartDpAgent --> Finish([Print Process Complete & Exit])
 ```
 
 ---

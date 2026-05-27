@@ -29,6 +29,7 @@ type PathBlock struct {
 	Dst             DstConfig `json:"dst"`
 	SrcFilesInclude []string  `json:"srcFilesInclude,omitempty"`
 	SrcFilesExclude []string  `json:"srcFilesExclude,omitempty"`
+	Restart         *bool     `json:"restart,omitempty"`
 }
 
 type SrcConfig struct {
@@ -52,6 +53,7 @@ type AppArgs struct {
 	Source     string
 	SetName    string
 	Force      bool
+	Restart    bool
 }
 
 func parseArgs() AppArgs {
@@ -66,6 +68,7 @@ func parseArgs() AppArgs {
 	fs.StringVar(&args.Source, "source", "", "Comma-separated list of custom source directories (bypasses config file/registry)")
 	fs.StringVar(&args.SetName, "set", "", "Name of a specific configuration set to execute")
 	fs.BoolVar(&args.Force, "force", false, "Force copy all files regardless of timestamps")
+	fs.BoolVar(&args.Restart, "restart", false, "Automatically restart DPAgent.exe immediately after all files have finished copying (if dp is true)")
 
 	err := fs.Parse(os.Args[1:])
 	if err != nil {

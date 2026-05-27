@@ -21,6 +21,7 @@ func main() {
 
 	// Initialize the global force copy flag
 	ForceCopy = args.Force
+	RestartAgent = args.Restart
 
 	// Resolve the config items to process
 	items, configFilePath, err := ResolveConfigAndItems(args)

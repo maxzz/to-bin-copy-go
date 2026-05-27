@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 	"unsafe"
@@ -127,4 +129,18 @@ func KillDpAgent() bool {
 	fmt.Println("Could not gracefully terminate DPAgent via window close.")
 	time.Sleep(3 * time.Second)
 	return false
+}
+
+// RestartDpAgent starts the DigitalPersona Agent process from the specified binary directory.
+func RestartDpAgent(binDir string) error {
+	agentPath := filepath.Join(binDir, "DpAgent.exe")
+	fmt.Printf("Restarting DPAgent from: %s...\n", agentPath)
+	cmd := exec.Command(agentPath)
+	cmd.Dir = binDir
+	err := cmd.Start()
+	if err != nil {
+		return fmt.Errorf("failed to start DPAgent.exe: %v", err)
+	}
+	fmt.Println(ColorGreen + "DPAgent.exe restarted successfully." + ColorReset)
+	return nil
 }

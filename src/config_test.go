@@ -102,6 +102,7 @@ func TestLoadConfig(t *testing.T) {
 				"isActive": true,
 				"paths": {
 					"dp": true,
+					"restart": true,
 					"src": {
 						"debug": ["C:/src/Win32"],
 						"release": ["C:/src/Release.x64"]
@@ -149,6 +150,10 @@ func TestLoadConfig(t *testing.T) {
 
 	if len(item1.Paths.Src.Debug) != 1 || item1.Paths.Src.Debug[0] != "C:/src/Win32" {
 		t.Errorf("item 1 Src.Debug parsed incorrectly")
+	}
+
+	if item1.Paths.Restart == nil || !*item1.Paths.Restart {
+		t.Errorf("item 1 Restart expected to be true, got %+v", item1.Paths.Restart)
 	}
 
 	item2 := cfg.Items[1]

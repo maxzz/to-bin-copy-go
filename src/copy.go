@@ -43,13 +43,20 @@ var x64Files = []string{
 }
 
 var ForceCopy bool
+var RestartAgent bool
 
 // ExecuteItems executes the copy operations for the selected config items.
 func ExecuteItems(items []ConfigItem, isRelease bool) {
 	var bDpAgentIsDead bool
+	var shouldRestart bool
+	var bin32FolderToRestart string
 
 	for _, item := range items {
 		if item.Paths != nil {
+			if item.Paths.Dp && (RestartAgent || (item.Paths.Restart != nil && *item.Paths.Restart)) {
+				shouldRestart = true
+			}
+
 			sourcePaths := item.Paths.Src.Debug
 			if isRelease {
 				sourcePaths = item.Paths.Src.Release
@@ -85,6 +92,7 @@ func ExecuteItems(items []ConfigItem, isRelease bool) {
 						}
 						bin32Folder = filepath.Join(programs32Folder, `DigitalPersona\Bin`)
 					}
+					bin32FolderToRestart = bin32Folder
 
 					fmt.Printf("Processing %s -> %s\n", sourcePathClean, bin32Folder)
 
@@ -154,6 +162,19 @@ func ExecuteItems(items []ConfigItem, isRelease bool) {
 				
 				CopyFileWithChecks(srcClean, dstClean, ForceCopy)
 			}
+		}
+	}
+
+	if shouldRestart {
+		if bin32FolderToRestart == "" {
+			programs32Folder := os.Getenv("ProgramFiles(x86)")
+			if programs32Folder == "" {
+				programs32Folder = `C:\Program Files (x86)`
+			}
+			bin32FolderToRestart = filepath.Join(programs32Folder, `DigitalPersona\Bin`)
+		}
+		if err := RestartDpAgent(bin32FolderToRestart); err != nil {
+			fmt.Fprintf(os.Stderr, ColorYellow+"Warning: Could not restart DPAgent: %v\n"+ColorReset, err)
 		}
 	}
 }
