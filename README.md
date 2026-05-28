@@ -49,6 +49,11 @@ This utility is a direct conversion of the original C# WinForms application `Cop
 5. **Administrator Privilege Warning**:
    - Since copying to `C:/Program Files` or `C:/Program Files (x86)` requires elevated privileges on Windows, the tool checks for administrator rights on startup and outputs a user-friendly warning if it's run as a standard user.
 
+6. **Post-Execution "Done" Message Screens (Wait Option)**:
+   - Displays a colorful success or failure screen depending on whether the execution completed without issues or errors were observed.
+   - If successful, a bold green "Everything is normal" screen is displayed for approximately 1.75 seconds before automatically closing.
+   - If any errors were observed, a bold red ASCII art screen is shown and waits on-screen until any key on the keyboard is pressed. This behavior is enabled whenever the CLI flag `-wait` or the configuration `"wait"` property is activated (with the CLI flag having precedence).
+
 ---
 
 ## Configuration File Format & Structure
@@ -76,6 +81,7 @@ The configuration file is written in standard JSON format (with comment support)
 Each item in `"items"` contains:
 - **`name` (String, Optional)**: The unique identifier for this configuration set. If specified, it can be selected via the `-set <name>` flag on startup.
 - **`isActive` (Boolean)**: If set to `true`, this set will be processed during a default run (when no specific set is designated using the `-set` flag).
+- **`wait` (Boolean, Optional)**: If set to `true`, a success/error screen will be displayed once the processing of this item completes. (The CLI `-wait` option takes precedence over this configuration).
 - **`paths` (Object, Optional)**: Contains details on directory paths and inclusion/exclusion matching:
   - **`dp` (Boolean)**: If `true`, the application executes its standard predefined file copies (such as `win32Files` or `x64Files`). If `false` or omitted, custom folder-to-folder file copying is performed based on directories.
   - **`src` (Object)**:
@@ -100,6 +106,7 @@ Each item in `"items"` contains:
     {
       "name": "dp-binaries",
       "isActive": true,
+      "wait": true,
       "paths": {
         "dp": true,
         "restart": true,
@@ -218,6 +225,7 @@ Within this key, the utility looks for two specific values depending on the targ
 | `-set <name>` | Designates a specific configuration set inside `config.json` to execute (and only this one). | Unspecified (by default, processes all sets where `isActive` is `true`). Executes the matching set regardless of its `isActive` flag status. |
 | `-force` | Force copy all matched files, bypassing the default timestamp comparison checks. | `false` (by default, copies only if the source file is strictly newer than the destination). |
 | `-restart` | Automatically restart `DPAgent.exe` immediately after all files have finished copying. | `false` (by default, DPAgent is stopped before copying but is not automatically restarted). Active only when the `dp` option is used. |
+|| `-wait` | Display a success or error screen after the process completes. | `false` (by default, no post-run screens are displayed). When enabled, success screen closes automatically after ~1.75s, while error screen waits for a keypress. CLI `-wait` flag takes precedence over any local `"wait"` configurations. |
 
 ### Examples
 
@@ -378,9 +386,16 @@ flowchart TD
     CheckRestart -- Yes --> CheckElevation{Is Utility <br> Elevated?}
     CheckElevation -- Yes --> StartDpAgentNonElevated[Start DPAgent.exe Non-Elevated <br> via explorer.exe]
     CheckElevation -- No --> StartDpAgentNormal[Start DPAgent.exe Normally <br> exec.Command]
-    CheckRestart -- No --> Finish
+    CheckRestart -- No --> Finish[Print Process Complete]
     StartDpAgentNonElevated --> Finish
-    StartDpAgentNormal --> Finish([Print Process Complete & Exit])
+    StartDpAgentNormal --> Finish
+    Finish --> CheckWait{Is Wait Option Enabled?}
+    CheckWait -- Yes --> CheckErrors{Did Execution Have Errors?}
+    CheckErrors -- Yes --> ShowFailed[Show Failed Screen <br> Red ASCII Art, Wait for Keypress]
+    CheckErrors -- No --> ShowSuccess[Show Success Screen <br> Green OK, Auto-closes after 1.75s]
+    CheckWait -- No --> ExitNode([Exit Program])
+    ShowFailed --> ExitNode
+    ShowSuccess --> ExitNode
 ```
 
 ---
