@@ -46,9 +46,7 @@ func parseArgs() AppArgs {
 		}
 		// Clean up and print the invalid argument error in Yellow
 		errMsg := strings.TrimSpace(buf.String())
-		fmt.Fprintln(os.Stderr, ColorYellow+"Error: "+errMsg+ColorReset)
-		fmt.Println()
-		fmt.Fprintln(os.Stderr, ColorYellow+"Run 'copy-pm-files.exe -help' to see full usage instructions."+ColorReset)
+		PrintError(errMsg)
 		os.Exit(2)
 	}
 
@@ -67,17 +65,13 @@ func parseArgs() AppArgs {
 	})
 
 	if !configSpecified && !sourceSpecified {
-		fmt.Fprintln(os.Stderr, ColorYellow+"Warning: No configuration file was specified and the --source option remains undefined."+ColorReset)
-		fmt.Println()
-		fmt.Fprintln(os.Stderr, ColorDim+"Run 'copy-pm-files.exe -help' to see full usage instructions."+ColorReset)
+		PrintWarning("No configuration file was specified and the --source option remains undefined.")
 		os.Exit(1)
 	}
 
 	// If there are any unexpected positional arguments, treat it as an invalid call.
 	if fs.NArg() > 0 {
-		fmt.Fprintln(os.Stderr, ColorYellow+fmt.Sprintf("Error: unexpected positional argument(s): %v", fs.Args())+ColorReset)
-		fmt.Println()
-		fmt.Fprintln(os.Stderr, ColorDim+"Run 'copy-pm-files.exe -help' to see full usage instructions."+ColorReset)
+		PrintError(fmt.Sprintf("unexpected positional argument(s): %v", fs.Args()))
 		os.Exit(1)
 	}
 

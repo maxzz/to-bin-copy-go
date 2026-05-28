@@ -26,7 +26,7 @@ func main() {
 	// Resolve the config items to process
 	items, configFilePath, err := ResolveConfigAndItems(args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, ColorRed+"Error: %v\n\n"+ColorReset, err)
+		PrintError(err.Error())
 		os.Exit(1)
 	}
 
