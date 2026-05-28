@@ -8,7 +8,7 @@
   */
   "items": [
     {
-      "name": "dp-binaries",
+      "setName": "dp-binaries",
       "isActive": true,
       "paths": {
         "dp": true,

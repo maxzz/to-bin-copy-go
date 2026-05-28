@@ -2,7 +2,7 @@
   // 64-bit ONLY copy configuration
   "items": [
     {
-      "name": "x64-only",
+      "setName": "x64-only",
       "isActive": true,
       "paths": {
         "dp": true,

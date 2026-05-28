@@ -14,8 +14,8 @@ func printAccepted(items []ConfigItem, mode, configFilePath string) {
 
 	fmt.Println("Items to process:")
 	for _, item := range items {
-		if item.Name != "" {
-			fmt.Printf("  - %s (Active: %t)\n", ColorGreen+item.Name+ColorReset, item.IsActive)
+		if item.SetName != "" {
+			fmt.Printf("  - %s (Active: %t)\n", ColorGreen+item.SetName+ColorReset, item.IsActive)
 		} else {
 			fmt.Printf("  - %s (Active: %t)\n", ColorGreen+"(unnamed)"+ColorReset, item.IsActive)
 		}

@@ -79,7 +79,7 @@ They will be stripped out before parsing, allowing for rich configuration notes.
 The configuration file is written in standard JSON format (with comment support). It begins with a top-level key named `"items"`, which is an array of configuration blocks/action sets.
 
 Each item in `"items"` contains:
-- **`name` (String, Optional)**: The unique identifier for this configuration set. If specified, it can be selected via the `-set <name>` flag on startup.
+- **`setName` (String, Optional)**: The unique identifier for this configuration set. If specified, it can be selected via the `-set <name>` flag on startup.
 - **`isActive` (Boolean)**: If set to `true`, this set will be processed during a default run (when no specific set is designated using the `-set` flag).
 - **`wait` (Boolean, Optional)**: If set to `true`, a success/error screen will be displayed once the processing of this item completes. (The CLI `-wait` option takes precedence over this configuration).
 - **`paths` (Object, Optional)**: Contains details on directory paths and inclusion/exclusion matching:
@@ -104,7 +104,7 @@ Each item in `"items"` contains:
 {
   "items": [
     {
-      "name": "dp-binaries",
+      "setName": "dp-binaries",
       "isActive": true,
       "wait": true,
       "paths": {
@@ -127,7 +127,7 @@ Each item in `"items"` contains:
       }
     },
     {
-      "name": "custom-wildcard-copier",
+      "setName": "custom-wildcard-copier",
       "isActive": false,
       "paths": {
         "dp": false,
@@ -152,7 +152,7 @@ Each item in `"items"` contains:
       }
     },
     {
-      "name": "individual-files",
+      "setName": "individual-files",
       "isActive": true,
       "files": [
         {
@@ -269,21 +269,21 @@ npm start -- -config tests/config_custom_drive_paths.json
 - `src/`: Directory containing all Go source files.
   - `main.go`: Entry point and program orchestration.
   - `1-config.go`: Argument parsing, JSON configuration, and Windows Registry integration.
+  - `5-copy-files.go`: Core copy loop, timestamp comparison, and locked file renaming.
+  - `6-dpagent-utils.go`: Graceful Win32 process search, termination, and restart logic for `DPAgent.exe`.
   - `7-help.go`: Modular help output displaying usage, default options, and behaviors.
   - `7-help-header.go`: Modular startup printing logic, active items formatting, and elevation warnings.
-  - `6-dpagent-utils.go`: Graceful Win32 process search, termination, and restart logic for `DPAgent.exe`.
   - `8-color.go`: Enables Windows ANSI virtual terminal colors and holds formatting constants.
   - `8-done_message.go`: Implements success and failure done message screens.
-  - `5-copy-files.go`: Core copy loop, timestamp comparison, and locked file renaming.
   - `7-version.go`: Auto-generated version declaration.
   - `copy_test.go`: Unit tests for file utility behaviors.
   - `config_test.go`: Unit tests for argument resolution, configuration loading, and comment-stripping logic.
 - `scripts/`: Development and utility scripts.
   - `build.js`: Auto-incrementing version builder that compiles the Go binary.
 - `tests/`: Directory containing various preconfigured examples of JSON configuration files.
+- `.gitignore`: Configured to ignore Go/Node/Windows artifacts and generated binaries.
 - `config.json`: Sample configuration file template.
 - `package.json`: NPM package manifest for unified scripts (run, test, build).
-- `.gitignore`: Configured to ignore Go/Node/Windows artifacts and generated binaries.
 
 ---
 

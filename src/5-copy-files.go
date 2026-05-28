@@ -199,7 +199,7 @@ func ExecuteItems(items []ConfigItem, isRelease bool) bool {
 // CopyPmFilesToBin is a legacy wrapper for backwards compatibility with tests and older invocation patterns.
 func CopyPmFilesToBin(sourcePaths []string, dstCfg DstConfig) {
 	item := ConfigItem{
-		Name:     "Legacy Run",
+		SetName:  "Legacy Run",
 		IsActive: true,
 		Paths: &PathBlock{
 			Dp: true,

@@ -2,7 +2,7 @@
   // 32-bit ONLY copy configuration
   "items": [
     {
-      "name": "win32-only",
+      "setName": "win32-only",
       "isActive": true,
       "paths": {
         "dp": true,

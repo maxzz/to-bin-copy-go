@@ -2,7 +2,7 @@
   // Custom drive paths config (simulating multi-drive or build servers layout)
   "items": [
     {
-      "name": "custom-drive",
+      "setName": "custom-drive",
       "isActive": true,
       "paths": {
         "dp": true,

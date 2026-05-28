@@ -82,7 +82,7 @@ Expected output parsed struct:
 	Config{
 	    Items: []ConfigItem{
 	        {
-	            Name: "set-1",
+	            SetName: "set-1",
 	            IsActive: true,
 	            Paths: &PathBlock{ Dp: true, Src: SrcConfig{ Debug: ["C:/src/Win32"] } }
 	        }
@@ -101,7 +101,7 @@ func TestLoadConfig(t *testing.T) {
 		// A comment explaining the config
 		"items": [
 			{
-				"name": "set-1",
+				"setName": "set-1",
 				"isActive": true,
 				"wait": true,
 				"paths": {
@@ -121,7 +121,7 @@ func TestLoadConfig(t *testing.T) {
 			   A block comment explaining another item
 			*/
 			{
-				"name": "set-2",
+				"setName": "set-2",
 				"isActive": false,
 				"files": [
 					{
@@ -148,7 +148,7 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	item1 := cfg.Items[0]
-	if item1.Name != "set-1" || !item1.IsActive || item1.Paths == nil || !item1.Paths.Dp {
+	if item1.SetName != "set-1" || !item1.IsActive || item1.Paths == nil || !item1.Paths.Dp {
 		t.Errorf("item 1 parsed incorrectly: %+v", item1)
 	}
 
@@ -165,7 +165,7 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	item2 := cfg.Items[1]
-	if item2.Name != "set-2" || item2.IsActive || item2.Paths != nil || len(item2.Files) != 1 {
+	if item2.SetName != "set-2" || item2.IsActive || item2.Paths != nil || len(item2.Files) != 1 {
 		t.Errorf("item 2 parsed incorrectly: %+v", item2)
 	}
 
@@ -207,7 +207,7 @@ func TestResolveConfigAndItems(t *testing.T) {
 	configContent := `{
 		"items": [
 			{
-				"name": "active-set",
+				"setName": "active-set",
 				"isActive": true,
 				"paths": {
 					"dp": true,
@@ -217,7 +217,7 @@ func TestResolveConfigAndItems(t *testing.T) {
 				}
 			},
 			{
-				"name": "inactive-set",
+				"setName": "inactive-set",
 				"isActive": false,
 				"paths": {
 					"dp": false,
@@ -242,7 +242,7 @@ func TestResolveConfigAndItems(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed resolving CLI override: %v", err)
 	}
-	if len(items) != 1 || items[0].Name != "CLI Source Flag Override" {
+	if len(items) != 1 || items[0].SetName != "CLI Source Flag Override" {
 		t.Errorf("expected CLI Source Flag Override, got %+v", items)
 	}
 	if configPath != "" {
@@ -257,7 +257,7 @@ func TestResolveConfigAndItems(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed resolving active items: %v", err)
 	}
-	if len(items) != 1 || items[0].Name != "active-set" {
+	if len(items) != 1 || items[0].SetName != "active-set" {
 		t.Errorf("expected 'active-set' only, got %d items: %+v", len(items), items)
 	}
 	expectedAbsPath, _ := filepath.Abs(tmpFile)
@@ -274,7 +274,7 @@ func TestResolveConfigAndItems(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed resolving with -set flag: %v", err)
 	}
-	if len(items) != 1 || items[0].Name != "inactive-set" {
+	if len(items) != 1 || items[0].SetName != "inactive-set" {
 		t.Errorf("expected 'inactive-set', got %+v", items)
 	}
 

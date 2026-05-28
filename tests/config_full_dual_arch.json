@@ -2,7 +2,7 @@
   // Full dual architecture configuration
   "items": [
     {
-      "name": "full-dual-arch",
+      "setName": "full-dual-arch",
       "isActive": true,
       "paths": {
         "dp": true,

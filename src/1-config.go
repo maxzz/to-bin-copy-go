@@ -12,41 +12,6 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-type Config struct {
-	Items []ConfigItem `json:"items"`
-}
-
-type ConfigItem struct {
-	Name     string      `json:"name"`
-	IsActive bool        `json:"isActive"`
-	Paths    *PathBlock  `json:"paths,omitempty"`
-	Files    []FileBlock `json:"files,omitempty"`
-	Wait     *bool       `json:"wait,omitempty"`
-}
-
-type PathBlock struct {
-	Dp              bool      `json:"dp"`
-	Src             SrcConfig `json:"src"`
-	Dst             DstConfig `json:"dst"`
-	SrcFilesInclude []string  `json:"srcFilesInclude,omitempty"`
-	SrcFilesExclude []string  `json:"srcFilesExclude,omitempty"`
-	Restart         *bool     `json:"restart,omitempty"`
-}
-
-type SrcConfig struct {
-	Debug   []string `json:"debug"`
-	Release []string `json:"release"`
-}
-
-type DstConfig struct {
-	Win32 string `json:"win32"`
-	X64   string `json:"x64"`
-}
-
-type FileBlock struct {
-	Src string `json:"src"`
-	Dst string `json:"dst"`
-}
 
 type AppArgs struct {
 	IsRelease     bool
@@ -279,7 +244,7 @@ func ResolveConfigAndItems(args AppArgs) ([]ConfigItem, string, error) {
 		paths := splitUnescaped(args.Source, ',', '\\')
 		cleaned := cleanAndNormalizePaths(paths)
 		item := ConfigItem{
-			Name:     "CLI Source Flag Override",
+			SetName:  "CLI Source Flag Override",
 			IsActive: true,
 			Paths: &PathBlock{
 				Dp: true,
@@ -317,7 +282,7 @@ func ResolveConfigAndItems(args AppArgs) ([]ConfigItem, string, error) {
 		// Filter items based on SetName
 		if args.SetName != "" {
 			for _, item := range cfg.Items {
-				if strings.EqualFold(item.Name, args.SetName) {
+				if strings.EqualFold(item.SetName, args.SetName) {
 					items = append(items, item)
 				}
 			}
@@ -344,7 +309,7 @@ func ResolveConfigAndItems(args AppArgs) ([]ConfigItem, string, error) {
 		// Verify if registry has any paths
 		if len(regBlock.Src.Debug) > 0 || len(regBlock.Src.Release) > 0 {
 			item := ConfigItem{
-				Name:     "Windows Registry Fallback",
+				SetName:  "Windows Registry Fallback",
 				IsActive: true,
 				Paths:    regBlock,
 			}
