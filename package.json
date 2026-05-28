@@ -1,6 +1,6 @@
 {
     "name": "to-bin-copy-go",
-    "version": "1.0.15",
+    "version": "1.0.16",
     "description": "Binaries File Copier (Go Version) - CLI Utility for copying built binaries",
     "author": "Max Zakharzhevskiy",
     "license": "MIT",

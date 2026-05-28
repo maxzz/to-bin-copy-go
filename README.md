@@ -268,12 +268,14 @@ npm start -- -config tests/config_custom_drive_paths.json
 
 - `src/`: Directory containing all Go source files.
   - `main.go`: Entry point and program orchestration.
-  - `config.go`: Argument parsing, JSON configuration, and Windows Registry integration.
-  - `help.go`: Modular help output displaying usage, default options, and behaviors.
-  - `print.go`: Modular startup printing logic, active items formatting, and elevation warnings.
-  - `process.go`: Graceful Win32 process search and close logic for `DPAgent.exe`.
-  - `copy.go`: Core copy loop, timestamp comparison, and locked file renaming.
-  - `version.go`: Auto-generated version declaration.
+  - `1-config.go`: Argument parsing, JSON configuration, and Windows Registry integration.
+  - `7-help.go`: Modular help output displaying usage, default options, and behaviors.
+  - `7-help-header.go`: Modular startup printing logic, active items formatting, and elevation warnings.
+  - `6-dpagent-utils.go`: Graceful Win32 process search, termination, and restart logic for `DPAgent.exe`.
+  - `8-color.go`: Enables Windows ANSI virtual terminal colors and holds formatting constants.
+  - `8-done_message.go`: Implements success and failure done message screens.
+  - `5-copy-files.go`: Core copy loop, timestamp comparison, and locked file renaming.
+  - `7-version.go`: Auto-generated version declaration.
   - `copy_test.go`: Unit tests for file utility behaviors.
   - `config_test.go`: Unit tests for argument resolution, configuration loading, and comment-stripping logic.
 - `scripts/`: Development and utility scripts.

@@ -30,8 +30,8 @@ function build() {
     packageJson.version = newVersion;
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 4) + '\n', 'utf8');
 
-    // 4. Update src/version.go
-    const versionGoPath = path.join(rootDir, 'src', 'version.go');
+    // 4. Update src/7-version.go
+    const versionGoPath = path.join(rootDir, 'src', '7-version.go');
     const versionGoContent = `package main
 
 // Version is the current version of the application.
