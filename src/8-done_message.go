@@ -2,18 +2,35 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"golang.org/x/sys/windows"
 )
 
-var (
-	msvcrt    = windows.NewLazySystemDLL("msvcrt.dll")
-	procGetch = msvcrt.NewProc("_getch")
-)
-
 func waitForKey() {
-	_, _, _ = procGetch.Call()
+	fd := os.Stdin.Fd()
+	h := windows.Handle(fd)
+
+	var st uint32
+	if err := windows.GetConsoleMode(h, &st); err != nil {
+		// Fallback to simple enter-press if not in a real console (e.g. redirected or piped)
+		var buf [1]byte
+		_, _ = os.Stdin.Read(buf[:])
+		return
+	}
+
+	// Disable echo input, line buffering, and standard system processing of ctrl-c/backspace
+	raw := st &^ (windows.ENABLE_ECHO_INPUT | windows.ENABLE_LINE_INPUT | windows.ENABLE_PROCESSED_INPUT)
+	if err := windows.SetConsoleMode(h, raw); err != nil {
+		var buf [1]byte
+		_, _ = os.Stdin.Read(buf[:])
+		return
+	}
+	defer windows.SetConsoleMode(h, st)
+
+	var buf [1]byte
+	_, _ = os.Stdin.Read(buf[:])
 }
 
 func ShowSuccessScreen() {
