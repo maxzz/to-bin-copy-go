@@ -40,7 +40,28 @@ func main() {
 	printAccepted(items, mode, configFilePath)
 
 	// Execute copy process
-	ExecuteItems(items, args.IsRelease)
+	hasErrors := ExecuteItems(items, args.IsRelease)
 
 	fmt.Println("\nProcess complete.")
+
+	// Determine if wait is enabled
+	waitEnabled := false
+	if args.WaitSpecified {
+		waitEnabled = args.Wait
+	} else {
+		for _, item := range items {
+			if item.Wait != nil && *item.Wait {
+				waitEnabled = true
+				break
+			}
+		}
+	}
+
+	if waitEnabled {
+		if hasErrors {
+			ShowFailedScreen()
+		} else {
+			ShowSuccessScreen()
+		}
+	}
 }

@@ -47,6 +47,11 @@ func PrintHelp() {
 	fmt.Println("        Only active when the 'dp' option is used.")
 	fmt.Println("        [Default]: false.")
 	fmt.Println()
+	fmt.Println("  " + ColorCyan + "-wait" + ColorReset)
+	fmt.Println("        Display a success or error screen after the process completes.")
+	fmt.Println("        Success screen closes automatically after ~2 seconds. Error screen waits for any key press.")
+	fmt.Println("        [Default]: false.")
+	fmt.Println()
 
 	// Print Default Behaviors & Fallbacks section in Dim/Gray (reduced brightness)
 	fmt.Println(ColorDim + "Default Behaviors & Fallbacks:")

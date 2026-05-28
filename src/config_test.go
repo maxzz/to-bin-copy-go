@@ -103,6 +103,7 @@ func TestLoadConfig(t *testing.T) {
 			{
 				"name": "set-1",
 				"isActive": true,
+				"wait": true,
 				"paths": {
 					"dp": true,
 					"restart": true,
@@ -149,6 +150,10 @@ func TestLoadConfig(t *testing.T) {
 	item1 := cfg.Items[0]
 	if item1.Name != "set-1" || !item1.IsActive || item1.Paths == nil || !item1.Paths.Dp {
 		t.Errorf("item 1 parsed incorrectly: %+v", item1)
+	}
+
+	if item1.Wait == nil || !*item1.Wait {
+		t.Errorf("item 1 Wait expected to be true, got %+v", item1.Wait)
 	}
 
 	if len(item1.Paths.Src.Debug) != 1 || item1.Paths.Src.Debug[0] != "C:/src/Win32" {

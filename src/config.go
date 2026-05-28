@@ -21,6 +21,7 @@ type ConfigItem struct {
 	IsActive bool        `json:"isActive"`
 	Paths    *PathBlock  `json:"paths,omitempty"`
 	Files    []FileBlock `json:"files,omitempty"`
+	Wait     *bool       `json:"wait,omitempty"`
 }
 
 type PathBlock struct {
@@ -48,12 +49,14 @@ type FileBlock struct {
 }
 
 type AppArgs struct {
-	IsRelease  bool
-	ConfigPath string
-	Source     string
-	SetName    string
-	Force      bool
-	Restart    bool
+	IsRelease     bool
+	ConfigPath    string
+	Source        string
+	SetName       string
+	Force         bool
+	Restart       bool
+	Wait          bool
+	WaitSpecified bool
 }
 
 func parseArgs() AppArgs {
@@ -69,6 +72,7 @@ func parseArgs() AppArgs {
 	fs.StringVar(&args.SetName, "set", "", "Name of a specific configuration set to execute")
 	fs.BoolVar(&args.Force, "force", false, "Force copy all files regardless of timestamps")
 	fs.BoolVar(&args.Restart, "restart", false, "Automatically restart DPAgent.exe immediately after all files have finished copying (if dp is true)")
+	fs.BoolVar(&args.Wait, "wait", false, "Wait and display success/error screens after execution is completed")
 
 	err := fs.Parse(os.Args[1:])
 	if err != nil {
@@ -91,6 +95,9 @@ func parseArgs() AppArgs {
 		}
 		if f.Name == "source" {
 			sourceSpecified = true
+		}
+		if f.Name == "wait" {
+			args.WaitSpecified = true
 		}
 	})
 

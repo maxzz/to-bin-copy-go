@@ -46,10 +46,12 @@ var ForceCopy bool
 var RestartAgent bool
 
 // ExecuteItems executes the copy operations for the selected config items.
-func ExecuteItems(items []ConfigItem, isRelease bool) {
+// Returns true if any errors occurred during execution, false if everything succeeded.
+func ExecuteItems(items []ConfigItem, isRelease bool) bool {
 	var bDpAgentIsDead bool
 	var shouldRestart bool
 	var bin32FolderToRestart string
+	var hasErrors bool
 
 	for _, item := range items {
 		if item.Paths != nil {
@@ -98,13 +100,18 @@ func ExecuteItems(items []ConfigItem, isRelease bool) {
 
 					if item.Paths.Dp {
 						for _, sFileName := range win32Files {
-							CopyFileToBin(sourcePathClean, sFileName, bin32Folder)
+							if !CopyFileToBin(sourcePathClean, sFileName, bin32Folder) {
+								hasErrors = true
+							}
 						}
 					} else {
 						// Custom include/exclude regex matching
-						err := copyCustomFiles(sourcePathClean, bin32Folder, item.Paths.SrcFilesInclude, item.Paths.SrcFilesExclude)
+						customFailed, err := copyCustomFiles(sourcePathClean, bin32Folder, item.Paths.SrcFilesInclude, item.Paths.SrcFilesExclude)
 						if err != nil {
 							fmt.Fprintf(os.Stderr, ColorRed+"  Error copying custom files: %v\n"+ColorReset, err)
+							hasErrors = true
+						} else if customFailed {
+							hasErrors = true
 						}
 					}
 
@@ -128,13 +135,18 @@ func ExecuteItems(items []ConfigItem, isRelease bool) {
 
 					if item.Paths.Dp {
 						for _, sFileName := range x64Files {
-							CopyFileToBin(sourcePathClean, sFileName, bin64Folder)
+							if !CopyFileToBin(sourcePathClean, sFileName, bin64Folder) {
+								hasErrors = true
+							}
 						}
 					} else {
 						// Custom include/exclude regex matching
-						err := copyCustomFiles(sourcePathClean, bin64Folder, item.Paths.SrcFilesInclude, item.Paths.SrcFilesExclude)
+						customFailed, err := copyCustomFiles(sourcePathClean, bin64Folder, item.Paths.SrcFilesInclude, item.Paths.SrcFilesExclude)
 						if err != nil {
 							fmt.Fprintf(os.Stderr, ColorRed+"  Error copying custom files: %v\n"+ColorReset, err)
+							hasErrors = true
+						} else if customFailed {
+							hasErrors = true
 						}
 					}
 				}
@@ -160,7 +172,9 @@ func ExecuteItems(items []ConfigItem, isRelease bool) {
 				srcClean := filepath.Clean(filepath.FromSlash(strings.TrimSpace(fileBlock.Src)))
 				dstClean := filepath.Clean(filepath.FromSlash(strings.TrimSpace(fileBlock.Dst)))
 
-				CopyFileWithChecks(srcClean, dstClean, ForceCopy)
+				if !CopyFileWithChecks(srcClean, dstClean, ForceCopy) {
+					hasErrors = true
+				}
 			}
 		}
 	}
@@ -175,8 +189,11 @@ func ExecuteItems(items []ConfigItem, isRelease bool) {
 		}
 		if err := RestartDpAgent(bin32FolderToRestart); err != nil {
 			fmt.Fprintf(os.Stderr, ColorYellow+"Warning: Could not restart DPAgent: %v\n"+ColorReset, err)
+			hasErrors = true
 		}
 	}
+
+	return hasErrors
 }
 
 // CopyPmFilesToBin is a legacy wrapper for backwards compatibility with tests and older invocation patterns.
@@ -196,13 +213,13 @@ func CopyPmFilesToBin(sourcePaths []string, dstCfg DstConfig) {
 	ExecuteItems([]ConfigItem{item}, false)
 }
 
-func copyCustomFiles(sourceDir, destDir string, includes, excludes []string) error {
+func copyCustomFiles(sourceDir, destDir string, includes, excludes []string) (bool, error) {
 	// Compile regex patterns first
 	var includeRegexes []*regexp.Regexp
 	for _, p := range includes {
 		re, err := regexp.Compile(p)
 		if err != nil {
-			return fmt.Errorf("invalid include pattern %q: %v", p, err)
+			return false, fmt.Errorf("invalid include pattern %q: %v", p, err)
 		}
 		includeRegexes = append(includeRegexes, re)
 	}
@@ -211,11 +228,12 @@ func copyCustomFiles(sourceDir, destDir string, includes, excludes []string) err
 	for _, p := range excludes {
 		re, err := regexp.Compile(p)
 		if err != nil {
-			return fmt.Errorf("invalid exclude pattern %q: %v", p, err)
+			return false, fmt.Errorf("invalid exclude pattern %q: %v", p, err)
 		}
 		excludeRegexes = append(excludeRegexes, re)
 	}
 
+	anyFailed := false
 	// Walk directory recursively
 	err := filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -254,13 +272,15 @@ func copyCustomFiles(sourceDir, destDir string, includes, excludes []string) err
 
 		if included && !excluded {
 			targetPath := filepath.Join(destDir, relPath)
-			CopyFileWithChecks(path, targetPath, ForceCopy)
+			if !CopyFileWithChecks(path, targetPath, ForceCopy) {
+				anyFailed = true
+			}
 		}
 
 		return nil
 	})
 
-	return err
+	return anyFailed, err
 }
 
 // isSharingViolation checks if the error is a Windows sharing violation (ERROR_SHARING_VIOLATION = 32).
@@ -281,19 +301,21 @@ func isSharingViolation(err error) bool {
 }
 
 // CopyFileToBin copies a single file if it's newer, and renames on sharing violation.
-func CopyFileToBin(sourcePath, sFileName, sDestPath string) {
-	CopyFileWithChecks(filepath.Join(sourcePath, sFileName), filepath.Join(sDestPath, sFileName), ForceCopy)
+// Returns true on success, false on error.
+func CopyFileToBin(sourcePath, sFileName, sDestPath string) bool {
+	return CopyFileWithChecks(filepath.Join(sourcePath, sFileName), filepath.Join(sDestPath, sFileName), ForceCopy)
 }
 
 // CopyFileWithChecks copies a single file with force/timestamp checks and in-use renaming fallback.
-func CopyFileWithChecks(srcPath, dstPath string, force bool) {
+// Returns true on success, false on error.
+func CopyFileWithChecks(srcPath, dstPath string, force bool) bool {
 	sourceFileInfo, err := os.Stat(srcPath)
 	if os.IsNotExist(err) {
 		fmt.Println(ColorRed + "  No source file!!!: " + srcPath + ColorReset)
-		return
+		return false
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, ColorRed+fmt.Sprintf("  Error reading source file %s: %v", srcPath, err)+ColorReset)
-		return
+		return false
 	}
 
 	sourceFileTime := sourceFileInfo.ModTime().UTC()
@@ -316,7 +338,7 @@ func CopyFileWithChecks(srcPath, dstPath string, force bool) {
 				// Success, set the destination file time to match the source file time
 				_ = os.Chtimes(dstPath, sourceFileInfo.ModTime(), sourceFileInfo.ModTime())
 				fmt.Println(ColorGreen + "  Copied " + dstPath + ColorReset)
-				break
+				return true
 			}
 
 			if isSharingViolation(err) {
@@ -324,15 +346,16 @@ func CopyFileWithChecks(srcPath, dstPath string, force bool) {
 				renameErr := RenameDestFile(sDestDir, sFileName)
 				if renameErr != nil {
 					fmt.Fprintln(os.Stderr, ColorRed+fmt.Sprintf("  Failed to rename locked file: %v", renameErr)+ColorReset)
-					break
+					return false
 				}
 			} else {
 				fmt.Fprintln(os.Stderr, ColorRed+fmt.Sprintf("  Failed copying file %s, error: %v", dstPath, err)+ColorReset)
-				break
+				return false
 			}
 		}
 	} else {
 		fmt.Println(ColorDim + "  Same time, skipping: " + filepath.Base(dstPath) + ColorReset)
+		return true
 	}
 }
 
