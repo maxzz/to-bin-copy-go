@@ -132,11 +132,18 @@ func KillDpAgent() bool {
 }
 
 // RestartDpAgent starts the DigitalPersona Agent process from the specified binary directory.
+// If the program is running with elevated (Administrator) privileges, it launches DPAgent.exe non-elevated using explorer.exe.
 func RestartDpAgent(binDir string) error {
 	agentPath := filepath.Join(binDir, "DpAgent.exe")
-	fmt.Printf("Restarting DPAgent from: %s...\n", agentPath)
-	cmd := exec.Command(agentPath)
-	cmd.Dir = binDir
+	var cmd *exec.Cmd
+	if isElevated() {
+		fmt.Printf("Restarting DPAgent (non-elevated) from: %s...\n", agentPath)
+		cmd = exec.Command("explorer.exe", agentPath)
+	} else {
+		fmt.Printf("Restarting DPAgent from: %s...\n", agentPath)
+		cmd = exec.Command(agentPath)
+		cmd.Dir = binDir
+	}
 	err := cmd.Start()
 	if err != nil {
 		return fmt.Errorf("failed to start DPAgent.exe: %v", err)

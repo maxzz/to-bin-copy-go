@@ -302,6 +302,7 @@ This utility orchestrates a structured, multi-step pipeline to safely and effici
    - Before attempting to overwrite any binaries, the utility uses the Win32 API (`FindWindowW` and `PostMessageW`) to safely post a `WM_CLOSE` message to the `DPAgent.exe` application window.
    - It waits up to 10 seconds for the service process to exit peacefully, preventing file lock conflicts.
    - If the `-restart` CLI flag or optional `restart: true` JSON configuration property is active when using the `dp` option, `DPAgent.exe` will be automatically launched/restarted immediately after all copy operations have finished.
+   - **Non-Elevated Spawning**: For system security, if this utility runs with elevated (Administrator) privileges, it uses a Windows Explorer bridge to launch the restarted `DPAgent.exe` as a standard, non-elevated process.
 
 5. **Smart Timestamp Comparison & Force Flag**:
    - For each target file, the tool compares the source and destination files' "Last Modified" times in UTC.
@@ -374,9 +375,12 @@ flowchart TD
     
     MoreItems -- Yes --> ExecItems
     MoreItems -- No --> CheckRestart{Is DPAgent Restart <br> Requested & dp Active?}
-    CheckRestart -- Yes --> StartDpAgent[Restart DPAgent.exe <br> from Target Directory]
+    CheckRestart -- Yes --> CheckElevation{Is Utility <br> Elevated?}
+    CheckElevation -- Yes --> StartDpAgentNonElevated[Start DPAgent.exe Non-Elevated <br> via explorer.exe]
+    CheckElevation -- No --> StartDpAgentNormal[Start DPAgent.exe Normally <br> exec.Command]
     CheckRestart -- No --> Finish
-    StartDpAgent --> Finish([Print Process Complete & Exit])
+    StartDpAgentNonElevated --> Finish
+    StartDpAgentNormal --> Finish([Print Process Complete & Exit])
 ```
 
 ---

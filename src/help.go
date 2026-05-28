@@ -81,7 +81,9 @@ func PrintHelp() {
 	fmt.Println("     - If DPAgent is not running, or exits successfully, copying begins immediately.")
 	fmt.Println("     - After copying, if '-restart' CLI option is specified or 'restart: true' is defined in the JSON")
 	fmt.Println("       configuration paths block, and the 'dp' option is active, DPAgent.exe is automatically restarted.")
-	fmt.Println("       from its installation folder (typically C:\\Program Files (x86)\\DigitalPersona\\Bin)." + ColorReset)
+	fmt.Println("       from its installation folder (typically C:\\Program Files (x86)\\DigitalPersona\\Bin).")
+	fmt.Println("     - Safety Note: If this program is running as elevated (Administrator), DPAgent.exe will be started")
+	fmt.Println("       non-elevated by default for system security." + ColorReset)
 	fmt.Println()
 	fmt.Println(ColorCyan + "==========================================================" + ColorReset)
 }

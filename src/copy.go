@@ -151,7 +151,7 @@ func ExecuteItems(items []ConfigItem, isRelease bool) {
 				if fileBlock.Src == "" || fileBlock.Dst == "" {
 					continue
 				}
-				
+
 				if !bDpAgentIsDead {
 					// Preemptively kill DPAgent if any file is copied
 					bDpAgentIsDead = KillDpAgent()
@@ -159,7 +159,7 @@ func ExecuteItems(items []ConfigItem, isRelease bool) {
 
 				srcClean := filepath.Clean(filepath.FromSlash(strings.TrimSpace(fileBlock.Src)))
 				dstClean := filepath.Clean(filepath.FromSlash(strings.TrimSpace(fileBlock.Dst)))
-				
+
 				CopyFileWithChecks(srcClean, dstClean, ForceCopy)
 			}
 		}
