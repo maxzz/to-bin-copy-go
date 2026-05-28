@@ -27,7 +27,6 @@ func main() {
 	items, configFilePath, err := ResolveConfigAndItems(args)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, ColorRed+"Error: %v\n\n"+ColorReset, err)
-		PrintHelp()
 		os.Exit(1)
 	}
 

@@ -12,7 +12,6 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-
 type AppArgs struct {
 	IsRelease     bool
 	ConfigPath    string
@@ -48,6 +47,7 @@ func parseArgs() AppArgs {
 		// Clean up and print the invalid argument error in Yellow
 		errMsg := strings.TrimSpace(buf.String())
 		fmt.Fprintln(os.Stderr, ColorYellow+"Error: "+errMsg+ColorReset)
+		fmt.Println()
 		fmt.Fprintln(os.Stderr, ColorYellow+"Run 'copy-pm-files.exe -help' to see full usage instructions."+ColorReset)
 		os.Exit(2)
 	}
@@ -320,7 +320,9 @@ func ResolveConfigAndItems(args AppArgs) ([]ConfigItem, string, error) {
 	// Compile a meaningful error message
 	var errMsg string
 	if err != nil {
-		errMsg = fmt.Sprintf("failed to load config file: %v. Registry fallback also failed", err)
+		cwd, _ := os.Getwd()
+		absPath, _ := filepath.Abs(args.ConfigPath)
+		errMsg = fmt.Sprintf("failed to load config file %q: %v\n  - Attempted absolute path: %s\n  - Current working directory: %s\nRegistry fallback also failed", args.ConfigPath, err, absPath, cwd)
 	} else {
 		errMsg = "no source paths or active items found in config file. Registry fallback also failed"
 	}

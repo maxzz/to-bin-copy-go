@@ -1,4 +1,4 @@
-{
+ {
   // DigitalPersona PM File Copier - Main Configuration File
   /*
      This config file can now include:
@@ -10,6 +10,7 @@
     {
       "setName": "dp-binaries",
       "isActive": true,
+      "wait": true,
       "paths": {
         "dp": true,
         "src": {
